@@ -37,7 +37,7 @@ export default function CostClient({ destination }) {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-4xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[
             { name: 'Quanto Custa Viajar', url: '/quanto-custa' },
@@ -185,6 +185,37 @@ export default function CostClient({ destination }) {
 
             </div>
 
+          </div>
+
+          {/* Clima e Melhor Época section */}
+          <div className="mt-12 bg-white border border-border-gray rounded-[28px] p-6 lg:p-8 text-left shadow-sm">
+            <h3 className="font-headers text-xl font-bold text-brand-navy border-b border-border-gray pb-4 mb-6 flex items-center gap-2">
+              <span>☀️ Clima &amp; Melhor Época para {destination.name}</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Melhor Período */}
+              <div className="bg-[#FAF9F6] border border-[#F47A20]/15 p-5 rounded-2xl flex flex-col gap-2 shadow-xs">
+                <span className="text-[10px] font-black text-brand-orange uppercase tracking-wider block">Melhor Período Recomendado</span>
+                <p className="text-sm font-bold text-brand-navy mt-1 leading-snug">{destination.bestTime}</p>
+                <p className="text-[11px] text-text-muted mt-2 leading-relaxed">Meses ideais com clima favorável, menor pluviosidade e temperaturas agradáveis para passeios ao ar livre.</p>
+              </div>
+              
+              {/* Card 2: Temperatura e Estações */}
+              <div className="bg-[#F8FAFC] border border-[#96AB21]/15 p-5 rounded-2xl flex flex-col gap-2 shadow-xs">
+                <span className="text-[10px] font-black text-brand-green uppercase tracking-wider block">Temperatura &amp; Clima Geral</span>
+                <p className="text-xs font-bold text-brand-navy mt-1 leading-snug">{destination.weatherInfo}</p>
+                <p className="text-[11px] text-text-muted mt-2 leading-relaxed">Médias térmicas esperadas ao longo do ano para ajudar a planejar o tipo de bagagem ideal.</p>
+              </div>
+              
+              {/* Card 3: Guia Rápido de Viagem */}
+              <div className="bg-[#FAF9F6] border border-border-gray p-5 rounded-2xl flex flex-col gap-2 shadow-xs">
+                <span className="text-[10px] font-black text-brand-navy uppercase tracking-wider block">Estações e Lazer</span>
+                <p className="text-xs text-text-muted leading-relaxed mt-1">
+                  {destination.clima || "Planeje suas reservas com antecedência na alta temporada para evitar tarifas mais elevadas em hotéis e voos locais."}
+                </p>
+              </div>
+            </div>
           </div>
 
         </div>

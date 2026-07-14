@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, LogOut, Heart, Clock, Star, Landmark, MapPin, Compass, Share2, Clipboard, Smartphone, Settings } from 'lucide-react';
+import { User, LogOut, Heart, Clock, Star, Landmark, MapPin, Compass, Share2, Clipboard, Smartphone, Settings, ChevronRight, Lock } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppDownloadModal from '@/components/AppDownloadModal';
@@ -18,6 +18,7 @@ export default function Perfil() {
   // Dynamic lists from CMS loaded based on localStorage slugs
   const [favoriteDestinations, setFavoriteDestinations] = useState([]);
   const [favoriteItineraries, setFavoriteItineraries] = useState([]);
+  const [purchasedItineraries, setPurchasedItineraries] = useState([]);
   
   // Shared link copied states
   const [copiedLink, setCopiedLink] = useState('');
@@ -48,6 +49,22 @@ export default function Perfil() {
       Promise.all(favItinsSlugs.map(slug => getItineraryBySlug(slug))).then(results => {
         setFavoriteItineraries(results.filter(Boolean));
       });
+
+      // Load purchased itineraries from localStorage
+      const purchasedSlugs = JSON.parse(localStorage.getItem('purchased_roteiros') || '[]');
+      Promise.all(purchasedSlugs.map(async (slug) => {
+        const item = await getItineraryBySlug(slug);
+        if (item) return item;
+        // Fallback custom title
+        const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+        return {
+          slug,
+          title: `Roteiro Personalizado: ${name}`,
+          duration: 3
+        };
+      })).then(results => {
+        setPurchasedItineraries(results.filter(Boolean));
+      });
     }
   }, [router]);
 
@@ -74,7 +91,7 @@ export default function Perfil() {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-32 pb-20">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           {/* User Profile Header Block */}
           <div className="bg-white border border-border-gray p-6 sm:p-8 rounded-[32px] shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 text-left">
@@ -135,6 +152,51 @@ export default function Perfil() {
             {/* Left Column: Favorites */}
             <div className="lg:col-span-8 flex flex-col gap-8 w-full text-left">
               
+              {/* Purchased/Unlocked Itineraries */}
+              <section className="bg-white border border-border-gray p-6 sm:p-8 rounded-[28px] shadow-sm flex flex-col gap-6">
+                <h3 className="font-headers text-lg font-bold text-brand-navy flex items-center gap-2">
+                  <span className="text-xl">🛍️</span>
+                  <span>Meus Roteiros Comprados (Desbloqueados)</span>
+                </h3>
+
+                {purchasedItineraries.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    {purchasedItineraries.map((it) => (
+                      <div 
+                        key={it.slug}
+                        className="p-4 border border-brand-green/30 rounded-xl bg-brand-green/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-brand-green/50 transition-all text-left"
+                      >
+                        <div className="text-left">
+                          <h4 className="font-headers text-sm font-bold text-brand-navy flex items-center gap-1.5 font-bold">
+                            <span className="text-brand-green font-bold">✓</span> {it.title}
+                          </h4>
+                          <p className="text-[11px] text-text-muted mt-1 flex items-center gap-2">
+                            <span className="bg-brand-green/10 text-brand-green px-2 py-0.5 rounded text-[9px] font-bold">DESBLOQUEADO</span>
+                            <span>•</span>
+                            <span>⏱️ {it.duration} Dias</span>
+                          </p>
+                        </div>
+                        
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
+                          <Link
+                            href={`/planejamento?destino=${it.slug}&step=2`}
+                            className="bg-brand-navy hover:bg-brand-orange text-white text-[10px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            Abrir Roteiro Completo <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-text-muted flex flex-col items-center justify-center gap-2">
+                    <Lock className="w-10 h-10 text-text-muted/65" />
+                    <p className="text-xs">Você ainda não comprou ou desbloqueou nenhum roteiro completo.</p>
+                    <Link href="/planejamento" className="text-xs font-bold text-brand-orange hover:underline mt-1">Criar e Desbloquear Roteiro</Link>
+                  </div>
+                )}
+              </section>
+
               {/* Favorited Itineraries */}
               <section className="bg-white border border-border-gray p-6 sm:p-8 rounded-[28px] shadow-sm flex flex-col gap-6">
                 <h3 className="font-headers text-lg font-bold text-brand-navy flex items-center gap-2">

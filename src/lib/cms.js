@@ -1102,7 +1102,7 @@ const itineraries = {
 
 const blogPosts = [
   {
-    title: 'Como Planejar uma Viagem para Paris Sem Estresse',
+    title: 'Como planejar uma viagem para Paris sem estresse',
     slug: 'como-planejar-viagem-paris',
     excerpt: 'Descubra os passos essenciais para organizar sua mala, escolher o melhor transporte e evitar golpes comuns na Cidade Luz.',
     content: 'Planejar uma viagem para Paris pode parecer intimidador, mas com as ferramentas certas tudo fica simples. Neste artigo, explicamos detalhadamente como funciona o metrô, quais aplicativos baixar, como economizar nas refeições fora dos pontos turísticos óbvios e como garantir seus ingressos para atrações concorridas como a Torre Eiffel e o Museu do Louvre com antecedência.',
@@ -1112,7 +1112,7 @@ const blogPosts = [
     image: '/assets/paris.png'
   },
   {
-    title: 'O Guia Definitivo de Massas Romanas Tradicionais',
+    title: 'O guia definitivo de massas romanas tradicionais',
     slug: 'guia-massas-romanas-tradicionais',
     excerpt: 'Entenda a diferença entre Carbonara, Cacio e Pepe, Amatriciana e Gricia e onde comer as versões autênticas em Roma.',
     content: 'Se você vai a Roma, precisa entender a culinária local. A capital italiana possui quatro massas icônicas que servem de base para a gastronomia do Lácio. A famosa Carbonara, a cremosa Cacio e Pepe com queijo Pecorino Romano e pimenta do reino, a saborosa Amatriciana com molho de tomate e guanciale, e a rústica Gricia. Explicamos a história de cada prato e as melhores trattorias no bairro de Trastevere para degustá-los.',
@@ -1122,7 +1122,7 @@ const blogPosts = [
     image: '/assets/greece.png'
   },
   {
-    title: 'Lisboa Econômica: Como Aproveitar Gastando Pouco',
+    title: 'Lisboa econômica: como aproveitar gastando pouco',
     slug: 'lisboa-economica-gastando-pouco',
     excerpt: 'Conheça mirantes gratuitos, passes de elétricos baratos e restaurantes locais deliciosos em Portugal.',
     content: 'Portugal é um dos destinos mais amigáveis para o bolso do turista brasileiro na Europa. Lisboa oferece dezenas de atrações e mirantes totalmente gratuitos (como os Miradouros da Senhora do Monte e Santa Luzia), além de uma malha de elétricos históricos de custo baixo. Damos as melhores dicas para se locomover usando o bilhete Viva Viagem e onde saborear pastéis de nata fresquinhos sem pagar o preço inflacionado de rotas puramente comerciais.',
@@ -1132,7 +1132,7 @@ const blogPosts = [
     image: '/assets/norway.png'
   },
   {
-    title: '5 Curiosidades que você precisa saber sobre a Capadócia',
+    title: '5 curiosidades que você precisa saber sobre a Capadócia',
     slug: '5-curiosidades-sobre-a-capadocia',
     excerpt: 'Da história de suas cidades subterrâneas ao segredo do clima que permite os balões voarem.',
     content: 'A Capadócia é uma das paisagens mais fascinantes e misteriosas da Terra. Neste artigo cobrimos curiosidades históricas como o fato de possuir dezenas de cidades inteiramente subterrâneas esculpidas na rocha, o segredo das formações rochosas chamadas de Chaminés de Fada e como funciona a calibração de vento dos pilotos de balões de ar quente.',
@@ -1142,7 +1142,7 @@ const blogPosts = [
     image: '/assets/turkey.png'
   },
   {
-    title: 'Gramado no Inverno: O que fazer na época mais fria do ano',
+    title: 'Gramado no inverno: o que fazer na época mais fria do ano',
     slug: 'gramado-no-inverno-o-que-fazer',
     excerpt: 'Aproveite fondues maravilhosos, trilhas de hortênsias e parques de neve na Serra Gaúcha.',
     content: 'O inverno em Gramado é inesquecível. Analisamos todas as principais atrações abertas de junho a agosto, dicas para reservar as famosas sequências de fondue suíço sem pagar taxas de agência, passeios de pedalinho no Lago Negro cercado de araucárias e o roteiro ideal de 3 dias para curtir com a família.',

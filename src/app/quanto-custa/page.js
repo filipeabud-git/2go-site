@@ -22,7 +22,7 @@ export default function QuantoCusta() {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[{ name: 'Quanto Custa Viajar', url: '/quanto-custa' }]} />
 
@@ -55,7 +55,7 @@ export default function QuantoCusta() {
                   </div>
                   <div>
                     <h3 className="font-headers text-lg font-bold text-brand-navy group-hover:text-brand-orange transition-colors">
-                      {dest.name}
+                      {dest.name}, {dest.country}
                     </h3>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed line-clamp-2">
                       Estimativas de orçamento e calculadora de gastos para {dest.name}.

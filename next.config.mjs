@@ -14,6 +14,10 @@ const nextConfig = {
   },
   async rewrites() {
     return [
+      // criar-roteiro friendly path mapping
+      { source: '/criar-roteiro', destination: '/planejamento' },
+      { source: '/criar-roteiro/:slug', destination: '/planejamento/:slug' },
+
       // English rewrites
       { source: '/en/destinations/:slug', destination: '/roteiros?search=:slug&locale=en' },
       { source: '/en/what-to-do/:slug', destination: '/o-que-fazer/:slug?locale=en' },

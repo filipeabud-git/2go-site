@@ -22,17 +22,35 @@ import confetti from 'canvas-confetti';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppDownloadModal from '@/components/AppDownloadModal';
-import LeadWallModal from '@/components/LeadWallModal';
+import CheckoutModal from '@/components/CheckoutModal';
+import { matchesSearch } from '@/lib/searchHelper';
+
+const destinationImages = {
+  paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
+  roma: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80',
+  lisboa: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=800&q=80',
+  londres: 'https://images.unsplash.com/photo-1513635269975-59663e0ca1ad?auto=format&fit=crop&w=800&q=80',
+  toquio: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
+  noronha: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
+  rio: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=800&q=80',
+  veadeiros: 'https://images.unsplash.com/photo-1549558549-415fa4bc3586?auto=format&fit=crop&w=800&q=80',
+  amazonas: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=800&q=80',
+  gramado: '/assets/gramado.png',
+  noruega: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=800&q=80',
+  maldivas: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80',
+  grecia: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80',
+  safari: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80'
+};
 
 const itineraryDatabase = {
   noronha: {
-    name: 'Fernando de Noronha, PE',
+    name: 'Fernando de Noronha, Brasil',
     title: 'Fernando de Noronha de Alto Padrão',
     desc: 'Um mergulho na exclusividade e na beleza natural do arquipélago mais preservado do Brasil.',
     days: [
       {
         day: 'Dia 1',
-        title: 'Chegada ao Paraíso & Sunset Vip',
+        title: 'Chegada ao Paraíso & Sunset VIP',
         events: [
           { time: '14:00', title: 'Check-in na Pousada Boutique (Nannai ou Maria Bonita)' },
           { time: '16:30', title: 'Navegação Privada ao Pôr do Sol com Espumante' },
@@ -45,8 +63,8 @@ const itineraryDatabase = {
         events: [
           { time: '08:30', title: 'Mergulho com tartarugas e tubarões na Baía do Sueste' },
           { time: '12:00', title: 'Almoço com Vista Panorâmica na Baía dos Golfinhos' },
-          { time: '14:30', title: 'Trilha Privativa e Descida à Baía do Sancho (Eleita a melhor praia)' },
-          { time: '19:30', title: 'Experiência Gastronômica: Festival da Zé Maria' }
+          { time: '14:30', title: 'Trilha Privativa e Descida à Baía do Sancho' },
+          { time: '19:30', title: 'Experiência Gastronômica: Festival do Zé Maria' }
         ]
       },
       {
@@ -55,13 +73,13 @@ const itineraryDatabase = {
         events: [
           { time: '09:00', title: 'Passeio de buggy off-road privativo pelas praias do Mar de Fora' },
           { time: '15:00', title: 'Trilha histórica da Fortaleza de Nossa Senhora dos Remédios' },
-          { time: '18:00', title: 'Jantar de despedida no Bar do Meio (Música ao vivo e vista espetacular)' }
+          { time: '18:00', title: 'Jantar de despedida no Bar do Meio com música ao vivo' }
         ]
       }
     ]
   },
   rio: {
-    name: 'Rio de Janeiro, RJ',
+    name: 'Rio de Janeiro, Brasil',
     title: 'Rio de Janeiro Experiência Exclusiva',
     desc: 'A essência carioca sofisticada, misturando história, natureza urbana e alta gastronomia.',
     days: [
@@ -70,25 +88,25 @@ const itineraryDatabase = {
         title: 'Check-In Imperial & Orla no Ocaso',
         events: [
           { time: '13:00', title: 'Hospedagem no Copacabana Palace ou Hotel Emiliano' },
-          { time: '16:00', title: 'Passeio Privativo de Helicóptero sobre o Cristo Redentor e Pão de Açúcar' },
-          { time: '20:00', title: 'Jantar Harmonizado no Restaurante Michelin ORO (Chef Felipe Bronze)' }
+          { time: '16:00', title: 'Passeio Privativo de Helicóptero sobre o Cristo Redentor' },
+          { time: '20:00', title: 'Jantar Harmonizado no Restaurante Michelin ORO' }
         ]
       },
       {
         day: 'Dia 2',
         title: 'Natureza Imersiva & Arte Contemporânea',
         events: [
-          { time: '09:00', title: 'Caminhada Privada com Guia pela Floresta da Tijuca até a Vista Chinesa' },
+          { time: '09:00', title: 'Caminhada Privada com Guia pela Floresta da Tijuca' },
           { time: '13:00', title: 'Almoço sofisticado no Aprazível (Santa Teresa)' },
-          { time: '15:30', title: 'Visita guiada exclusiva ao Museu de Arte Contemporânea (MAC Niterói)' },
-          { time: '21:00', title: 'Drinks e Jazz ao vivo no moderníssimo Baretto-Londra (Ipanema)' }
+          { time: '15:30', title: 'Visita guiada exclusiva ao Museu de Arte Contemporânea (MAC)' },
+          { time: '21:00', title: 'Drinks e Jazz ao vivo no moderníssimo Baretto-Londra' }
         ]
       },
       {
         day: 'Dia 3',
         title: 'Mar do Rio & Despedida Premium',
         events: [
-          { time: '10:00', title: 'Charter de Iate Privado ao longo da Baía de Guanabara e Ilhas Cagarras' },
+          { time: '10:00', title: 'Charter de Iate Privado ao longo das Ilhas Cagarras' },
           { time: '14:30', title: 'Almoço tardio no charmoso Satyricon' },
           { time: '17:30', title: 'Relax no Spa do hotel e check-out' }
         ]
@@ -96,7 +114,7 @@ const itineraryDatabase = {
     ]
   },
   veadeiros: {
-    name: 'Chapada dos Veadeiros, GO',
+    name: 'Chapada dos Veadeiros, Brasil',
     title: 'Chapada dos Veadeiros Mística e Luxuosa',
     desc: 'Conexão profunda com a natureza dos cristais com total conforto e bem-estar.',
     days: [
@@ -113,7 +131,7 @@ const itineraryDatabase = {
         day: 'Dia 2',
         title: 'Canyons de Cristal & Saltos Majestosos',
         events: [
-          { time: '08:30', title: 'Trilha Premium ao Parque Nacional: Mirante do Salto e Carrossel' },
+          { time: '08:30', title: 'Trilha Premium ao Parque Nacional: Mirante do Salto' },
           { time: '13:00', title: 'Piquenique gourmet servido à beira das águas na cachoeira' },
           { time: '15:30', title: 'Visita ao Vale da Lua com iluminação de final de tarde' },
           { time: '20:30', title: 'Degustação de cervejas artesanais locais e jantar sofisticado' }
@@ -123,7 +141,7 @@ const itineraryDatabase = {
         day: 'Dia 3',
         title: 'Cachoeira do Segredo & Conexão de Despedida',
         events: [
-          { time: '09:00', title: 'Aventura 4x4 e trilha privativa até a belíssima Cachoeira do Segredo' },
+          { time: '09:00', title: 'Aventura 4x4 e trilha privativa até a Cachoeira do Segredo' },
           { time: '14:00', title: 'Almoço no Santo Cerrado Risoteria' },
           { time: '17:00', title: 'Transfer privado de retorno' }
         ]
@@ -131,7 +149,7 @@ const itineraryDatabase = {
     ]
   },
   amazonas: {
-    name: 'Manaus & Selva, AM',
+    name: 'Manaus & Selva, Brasil',
     title: 'Imersão Eco-Luxo na Amazônia',
     desc: 'A grandiosidade da maior floresta tropical do mundo desbravada com sofisticação incomparável.',
     days: [
@@ -148,9 +166,9 @@ const itineraryDatabase = {
         day: 'Dia 2',
         title: 'Despertar da Selva & Trilhas na Copa',
         events: [
-          { time: '05:30', title: 'Canoagem matinal silenciosa para observação do nascer do sol e pássaros' },
-          { time: '09:30', title: 'Trilha interpretativa de sobrevivência e botânica com guia indígena' },
-          { time: '15:00', title: 'Focagem noturna de jacarés e sons da floresta em barco privativo' },
+          { time: '05:30', title: 'Canoagem matinal silenciosa para observação do nascer do sol' },
+          { time: '09:30', title: 'Trilha interpretativa com guia indígena' },
+          { time: '15:00', title: 'Focagem noturna de jacarés em barco privativo' },
           { time: '20:30', title: 'Jantar na copa das árvores no mirante panorâmico do Lodge' }
         ]
       },
@@ -158,7 +176,7 @@ const itineraryDatabase = {
         day: 'Dia 3',
         title: 'Visita Comunitária & Ritual de Despedida',
         events: [
-          { time: '09:00', title: 'Visita guiada e intercâmbio cultural em comunidade ribeirinha sustentável' },
+          { time: '09:00', title: 'Visita guiada e intercâmbio cultural em comunidade ribeirinha' },
           { time: '13:00', title: 'Almoço de peixe assado na brasa na Ilha de Anavilhanas' },
           { time: '16:00', title: 'Retorno com transfer privativo para Manaus' }
         ]
@@ -166,7 +184,7 @@ const itineraryDatabase = {
     ]
   },
   gramado: {
-    name: 'Gramado, RS',
+    name: 'Gramado, Brasil',
     title: 'Gramado e Canela Autêntico Europeu',
     desc: 'Romantismo, névoa, chocolate artesanal e o melhor do vinho nacional na Serra Gaúcha.',
     days: [
@@ -174,7 +192,7 @@ const itineraryDatabase = {
         day: 'Dia 1',
         title: 'Chegada Serrana & Alta Gastronomia',
         events: [
-          { time: '14:00', title: 'Hospedagem no requintado Hotel Kurotel ou Estalagem St. Hubertus' },
+          { time: '14:00', title: 'Hospedagem no Kurotel ou Estalagem St. Hubertus' },
           { time: '16:30', title: 'Chá da tarde colonial privativo com vista para o Lago Negro' },
           { time: '20:30', title: 'Jantar Suíço Tradicional (Fondue Premium) no Belle du Valais' }
         ]
@@ -183,9 +201,9 @@ const itineraryDatabase = {
         day: 'Dia 2',
         title: 'Vales Vitivinícolas & Cascata do Caracol',
         events: [
-          { time: '09:00', title: 'Tour privativo pelos vinhedos do Vale dos Vinhedos com degustação VIP' },
+          { time: '09:00', title: 'Tour privativo pelos vinhedos com degustação VIP' },
           { time: '13:30', title: 'Almoço harmonizado na vinícola Casa Valduga' },
-          { time: '16:00', title: 'Parada no mirante exclusivo da Cascata do Caracol (Canela)' },
+          { time: '16:00', title: 'Parada no mirante exclusivo da Cascata do Caracol' },
           { time: '20:30', title: 'Jantar contemporâneo no estrelado Wood Lounge Bar' }
         ]
       },
@@ -193,9 +211,9 @@ const itineraryDatabase = {
         day: 'Dia 3',
         title: 'Chocolaterias Finas & Caminhos de Pedra',
         events: [
-          { time: '10:00', title: 'Workshop privado de produção de trufas em fábrica artesanal boutique' },
+          { time: '10:00', title: 'Workshop privado de produção de trufas artesanais' },
           { time: '13:00', title: 'Almoço tipicamente italiano nos Caminhos de Pedra' },
-          { time: '16:00', title: 'Check-out e transfer de retorno ao aeroporto de Porto Alegre' }
+          { time: '16:00', title: 'Check-out e transfer de retorno' }
         ]
       }
     ]
@@ -207,7 +225,7 @@ const itineraryDatabase = {
     days: [
       {
         day: 'Dia 1',
-        title: 'Monumentos Clássicos',
+        title: 'Monumentos Clássicos & Sena',
         events: [
           { time: '09:00', title: 'Visita ao Museu do Louvre' },
           { time: '13:00', title: 'Almoço no Jardin des Tuileries' },
@@ -371,7 +389,7 @@ const itineraryDatabase = {
     ]
   },
   noruega: {
-    name: 'Noruega (Fiordes & Aurora Boreal)',
+    name: 'Tromsø, Noruega',
     title: 'Fiordes Noruegueses & Aurora Boreal',
     desc: 'Uma expedição sob as luzes do norte e através dos fiordes mais profundos e belos do mundo.',
     days: [
@@ -388,26 +406,26 @@ const itineraryDatabase = {
         day: 'Dia 2',
         title: 'Voo para Tromsø & Caçada à Aurora Boreal',
         events: [
-          { time: '09:00', title: 'Voo doméstico de Oslo para Tromsø (a capital do Ártico)' },
+          { time: '09:00', title: 'Voo doméstico de Oslo para Tromsø' },
           { time: '14:00', title: 'Passeio pelo centro histórico e Catedral Ártica' },
-          { time: '19:00', title: 'Expedição privativa de trenó para caça da Aurora Boreal' }
+          { time: '19:00', title: 'Expedição privativa para caça da Aurora Boreal' }
         ]
       },
       {
         day: 'Dia 3',
         title: 'Navegação Silenciosa pelos Fiordes',
         events: [
-          { time: '09:30', title: 'Cruzeiro híbrido elétrico pelas águas cristalinas do fiorde de Tromsø' },
-          { time: '13:00', title: 'Almoço com degustação de iguarias árticas a bordo' },
+          { time: '09:30', title: 'Cruzeiro híbrido elétrico pelas águas cristalinas do fiorde' },
+          { time: '13:00', title: 'Almoço com degustação de iguarias árticas' },
           { time: '16:00', title: 'Retorno, relax em spa térmico e check-out' }
         ]
       }
     ]
   },
   maldivas: {
-    name: 'Ilhas Maldivas (Oceano Índico)',
+    name: 'Ilhas Maldivas',
     title: 'Maldivas Exclusivo & Sob Medida',
-    desc: 'O refúgio de praia perfeito em bangalôs luxuosos sobre as águas azul-turquesa cristalinas.',
+    desc: 'O refúgio de praia perfeito em bangalôs luxuosos sobre as águas azul-turquesa.',
     days: [
       {
         day: 'Dia 1',
@@ -415,15 +433,15 @@ const itineraryDatabase = {
         events: [
           { time: '11:00', title: 'Transfer cênico de hidroavião para o Resort Soneva Jani' },
           { time: '14:00', title: 'Check-in no bangalô sobre as águas com tobogã privativo' },
-          { time: '17:00', title: 'Sunset cocktail no bar flutuante com música ambiente' }
+          { time: '17:00', title: 'Sunset cocktail no bar flutuante com música' }
         ]
       },
       {
         day: 'Dia 2',
         title: 'Mergulho com Raias & Spa sobre a Água',
         events: [
-          { time: '08:30', title: 'Snorkeling privado para nadar com tartarugas e arraias manta' },
-          { time: '13:00', title: 'Almoço flutuante servido na piscina privativa do bangalô' },
+          { time: '08:30', title: 'Snorkeling privado para nadar com arraias manta' },
+          { time: '13:00', title: 'Almoço flutuante servido na piscina privativa' },
           { time: '16:00', title: 'Massagem ayurvédica de casal no spa sobre a lagoa' }
         ]
       },
@@ -431,15 +449,15 @@ const itineraryDatabase = {
         day: 'Dia 3',
         title: 'Sandbank Privado & Jantar Sob as Estrelas',
         events: [
-          { time: '10:00', title: 'Passeio de lancha rápida para piquenique gourmet em banco de areia deserto' },
+          { time: '10:00', title: 'Passeio de lancha rápida para piquenique em banco de areia deserto' },
           { time: '16:00', title: 'Tempo livre para stand-up paddle ou caiaque transparente' },
-          { time: '19:30', title: 'Jantar privativo à luz de velas com churrasco de frutos do mar' }
+          { time: '19:30', title: 'Jantar privativo com churrasco de frutos do mar' }
         ]
       }
     ]
   },
   grecia: {
-    name: 'Santorini & Atenas, Grécia',
+    name: 'Santorini, Grécia',
     title: 'Grécia Clássica & Ilhas Egeias',
     desc: 'A fusão da história clássica ocidental em Atenas com a beleza cênica e romântica de Santorini.',
     days: [
@@ -447,33 +465,33 @@ const itineraryDatabase = {
         day: 'Dia 1',
         title: 'Acrópole Histórica & Plaka',
         events: [
-          { time: '09:00', title: 'Visita exclusiva com guia arqueológico à Acrópole e Museu' },
-          { time: '13:00', title: 'Almoço grego tradicional nas ruelas charmosas de Plaka' },
-          { time: '17:00', title: 'Caminhada ao topo do Monte Licabeto para vista de Atenas' }
+          { time: '09:00', title: 'Visita exclusiva com guia arqueológico à Acrópole' },
+          { time: '13:00', title: 'Almoço grego tradicional nas ruelas de Plaka' },
+          { time: '17:00', title: 'Caminhada ao topo do Monte Licabeto' }
         ]
       },
       {
         day: 'Dia 2',
         title: 'Voo para Santorini & Pôr do Sol em Oia',
         events: [
-          { time: '08:00', title: 'Voo de Atenas para Santorini (ou balsa rápida classe VIP)' },
+          { time: '08:00', title: 'Voo de Atenas para Santorini (classe VIP)' },
           { time: '13:00', title: 'Check-in em hotel boutique em penhasco da Caldera' },
-          { time: '17:30', title: 'Degustação de vinhos locais e pôr do sol nas ruínas de Oia' }
+          { time: '17:30', title: 'Degustação de vinhos locais e pôr do sol nas ruínas' }
         ]
       },
       {
         day: 'Dia 3',
         title: 'Navegação na Caldera de Catamarã',
         events: [
-          { time: '09:30', title: 'Cruzeiro privativo de catamarã pela Caldera, vulcão e fontes termais' },
-          { time: '13:30', title: 'Almoço grego grelhado na hora a bordo do catamarã' },
-          { time: '18:00', title: 'Retorno ao hotel e jantar com vista da Caldera iluminada' }
+          { time: '09:30', title: 'Cruzeiro privativo de catamarã pela Caldera' },
+          { time: '13:30', title: 'Almoço grego grelhado na hora a bordo' },
+          { time: '18:00', title: 'Retorno ao hotel e jantar com vista da Caldera' }
         ]
       }
     ]
   },
   safari: {
-    name: 'Kruger Park & Cape Town, África do Sul',
+    name: 'Kruger & Cape Town, África do Sul',
     title: 'Safári de Luxo & Rota dos Vinhos',
     desc: 'A emoção dos Big Five na savana combinada ao charme cosmopolita de Cape Town e vinícolas.',
     days: [
@@ -481,8 +499,8 @@ const itineraryDatabase = {
         day: 'Dia 1',
         title: 'Chegada a Cape Town & Table Mountain',
         events: [
-          { time: '12:00', title: 'Check-in no The Silo Hotel (V&A Waterfront, Cape Town)' },
-          { time: '15:00', title: 'Subida de teleférico à icônica Table Mountain' },
+          { time: '12:00', title: 'Check-in no The Silo Hotel (Cape Town)' },
+          { time: '15:00', title: 'Subida de teleférico à Table Mountain' },
           { time: '20:00', title: 'Jantar contemporâneo africano no restaurante FYN' }
         ]
       },
@@ -490,17 +508,17 @@ const itineraryDatabase = {
         day: 'Dia 2',
         title: 'Safári no Kruger Park (Big Five)',
         events: [
-          { time: '06:00', title: 'Voo privado de Cape Town para a pista de pouso de Skukuza no Kruger' },
+          { time: '06:00', title: 'Voo privado para o Kruger' },
           { time: '13:00', title: 'Hospedagem no Singita Boulders Lodge à beira do rio' },
-          { time: '15:30', title: 'Game Drive em veículo 4x4 aberto para avistar animais selvagens' }
+          { time: '15:30', title: 'Game Drive em veículo 4x4 aberto' }
         ]
       },
       {
         day: 'Dia 3',
         title: 'Safári ao Amanhecer & Stellenbosch',
         events: [
-          { time: '05:30', title: 'Safári fotográfico matinal seguido de café da manhã na savana' },
-          { time: '13:00', title: 'Retorno a Stellenbosch para tour privativo pelas vinícolas' },
+          { time: '05:30', title: 'Safári fotográfico matinal seguido de café na savana' },
+          { time: '13:00', title: 'Retorno a Stellenbosch para tour pelas vinícolas' },
           { time: '17:00', title: 'Transfer final e check-out' }
         ]
       }
@@ -510,28 +528,44 @@ const itineraryDatabase = {
 
 export default function PlannerClient({ preselectedDestinationSlug }) {
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
-  const [isLeadWallOpen, setIsLeadWallOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [step, setStep] = useState(preselectedDestinationSlug ? 1 : 0);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [showResults, setShowResults] = useState(false);
 
-  // Selections
+  // States for Wizard Questionnaire (Fase 3.4)
   const [destination, setDestination] = useState(preselectedDestinationSlug || '');
-  const [style, setStyle] = useState('');
-  const [duration, setDuration] = useState('');
-  const [budget, setBudget] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [noExactDates, setNoExactDates] = useState(false);
+  const [approximateMonth, setApproximateMonth] = useState('');
+  const [travelers, setTravelers] = useState('');
+  const [hasKidsOrSeniors, setHasKidsOrSeniors] = useState('');
+  const [budget, setBudget] = useState('');
+  const [pace, setPace] = useState('');
+  const [style, setStyle] = useState('');
+  const [interests, setInterests] = useState([]);
+  const [diet, setDiet] = useState('nenhuma');
+  const [restrictions, setRestrictions] = useState('');
+
+  // Check purchase status in LocalStorage dynamically for the active destination
+  useEffect(() => {
+    if (typeof window !== 'undefined' && destination) {
+      const purchased = JSON.parse(localStorage.getItem('purchased_roteiros') || '[]');
+      if (purchased.includes(destination)) {
+        setIsUnlocked(true);
+      } else {
+        setIsUnlocked(false);
+      }
+    }
+  }, [destination, showResults]);
 
   const selectDestinationAndAdvance = (destId) => {
     setDestination(destId);
     setStep(1);
-  };
-
-  const selectStyleAndAdvance = (styleId) => {
-    setStyle(styleId);
-    setStep(2);
   };
 
   // Reset steps if preselected value changes
@@ -554,15 +588,17 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
         setDestination(destSlug);
         setSearchQuery(urlDestino);
         
-        if (urlStep === '2' || !urlStep) {
-          setStep(1); // Set to Step 1 (which is Passo 2 of 3)
+        if (urlStep) {
+          setStep(parseInt(urlStep, 10) - 1);
+        } else {
+          setStep(1);
         }
       }
     }
   }, []);
 
   const handleNext = () => {
-    if (step < 2) {
+    if (step < 5) {
       setStep(step + 1);
     } else {
       triggerLoadingSequence();
@@ -573,7 +609,6 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
     if (step > (preselectedDestinationSlug ? 1 : 0)) {
       setStep(step - 1);
     } else if (preselectedDestinationSlug && step === 1) {
-      // If we go back from step 1 when preselected, do nothing or allow changing destination
       setStep(0);
     }
   };
@@ -581,7 +616,7 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
   const triggerLoadingSequence = () => {
     setLoading(true);
     const statuses = [
-      'Analisando seu perfil de viajante...',
+      'Analisando perfil de viajante...',
       'Mapeando melhores rotas locais...',
       'Buscando atrações gastronômicas exclusivas...',
       'Otimizando horários e conexões...',
@@ -607,8 +642,17 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
     setStep(preselectedDestinationSlug ? 1 : 0);
     setDestination(preselectedDestinationSlug || '');
     setStyle('');
-    setDuration('');
+    setStartDate('');
+    setEndDate('');
+    setNoExactDates(false);
+    setApproximateMonth('');
+    setTravelers('');
+    setHasKidsOrSeniors('');
     setBudget('');
+    setPace('');
+    setInterests([]);
+    setDiet('nenhuma');
+    setRestrictions('');
     setShowResults(false);
     setIsUnlocked(false);
   };
@@ -625,18 +669,30 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
   const isNextDisabled = () => {
     if (step === 0) return !destination;
-    if (step === 1) return !style;
-    if (step === 2) return !duration || !budget;
+    if (step === 1) return !noExactDates ? (!startDate || !endDate) : !approximateMonth;
+    if (step === 2) return !travelers || !hasKidsOrSeniors;
+    if (step === 3) return !budget || !pace;
+    if (step === 4) return !style || interests.length === 0;
+    if (step === 5) return false;
     return true;
+  };
+
+  // Calculate dynamic travel days count
+  const getTravelDaysCount = () => {
+    if (!startDate || !endDate || noExactDates) return 3; // Default fallback
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, Math.min(30, diffDays));
   };
 
   // Resolve active itinerary (with custom generator fallback for unknown destinations)
   let activeItinerary = itineraryDatabase[destination];
+  const targetDaysCount = getTravelDaysCount();
+
   if (!activeItinerary && destination) {
-    // Capitalize destination name
     const formattedName = destination.charAt(0).toUpperCase() + destination.slice(1);
-    
-    // Choose style description label
     let styleText = 'Personalizado';
     if (style === 'aventura') styleText = 'Aventura & Natureza';
     else if (style === 'cultura') styleText = 'Cultural & Histórico';
@@ -647,39 +703,34 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
       name: formattedName,
       title: `${formattedName}: Roteiro ${styleText}`,
       desc: `Um planejamento exclusivo feito sob medida para você explorar o melhor de ${formattedName} com foco em ${styleText.toLowerCase()}.`,
-      days: [
-        {
-          day: 'Dia 1',
-          title: 'Chegada & Ambientação local',
-          events: [
-            { time: '14:00', title: `Check-in em hotel boutique de alto padrão em ${formattedName}` },
-            { time: '16:30', title: `Passeio guiado a pé pelos pontos mais emblemáticos de ${formattedName}` },
-            { time: '20:00', title: `Jantar de boas-vindas com pratos tradicionais locais` }
-          ]
-        },
-        {
-          day: 'Dia 2',
-          title: style === 'aventura' ? 'Aventura & Ação no Destino' : style === 'cultura' ? 'Arte & Imersão Cultural' : style === 'natureza' ? 'Natureza, Relax & Bem-Estar' : 'Experiências Gastronômicas Exclusivas',
-          events: [
-            { time: '09:00', title: style === 'aventura' ? `Trilha panorâmica ou exploração com adrenalina ao redor de ${formattedName}` : style === 'cultura' ? `Visita privativa a museus clássicos e monumentos históricos de ${formattedName}` : style === 'natureza' ? `Visita guiada a parques ecológicos, lagos ou praias relaxantes` : `Tour gourmet guiado pelos mercados locais e bairros históricos` },
-            { time: '13:00', title: `Almoço gourmet especial com indicação de nossos curadores` },
-            { time: '15:30', title: style === 'aventura' ? `Prática de esportes ao ar livre e rotas cênicas off-road` : style === 'cultura' ? `Visita arquitetônica exclusiva com guia local historiador` : style === 'natureza' ? `Sessão de SPA premium ou meditação ao pôr do sol` : `Degustação VIP de vinhos locais ou workshop com Chef regional` },
-            { time: '20:30', title: budget === 'luxo' ? `Experiência Premium: Jantar de gala ou em restaurante estrelado Michelin em ${formattedName}` : `Jantar aconchegante em bistrô tradicional com excelente custo-benefício` }
-          ]
-        },
-        {
-          day: 'Dia 3',
-          title: 'Descobertas Finais & Despedida',
-          events: [
-            { time: '10:00', title: `Visita a mirantes locais e compras em boutiques artesanais` },
-            { time: '13:30', title: `Almoço de despedida em restaurante com vista panorâmica` },
-            { time: '16:00', title: `Check-out, transfer privado e retorno` }
-          ]
-        }
-      ]
+      days: []
     };
-  } else if (!activeItinerary) {
-    activeItinerary = itineraryDatabase.rio;
+  }
+
+  // Populate dynamic days based on base days count and user selected duration
+  let finalDays = [];
+  if (activeItinerary) {
+    const baseDays = activeItinerary.days || [];
+    finalDays = [...baseDays];
+
+    if (finalDays.length < targetDaysCount) {
+      const diff = targetDaysCount - finalDays.length;
+      for (let d = 1; d <= diff; d++) {
+        const nextDayNum = finalDays.length + 1;
+        finalDays.push({
+          day: `Dia ${nextDayNum}`,
+          title: style === 'aventura' ? 'Caminhos Cênicos & Exploração Extrema' : style === 'cultura' ? 'Marcos Históricos & Museus Locais' : style === 'natureza' ? 'Relaxamento, Mirantes & Conexão Local' : 'Imersão de Sabores & Vinhedos',
+          events: [
+            { time: '09:00', title: `Exploração guiada das redondezas de ${activeItinerary.name || destination}` },
+            { time: '13:00', title: `Almoço especial sugerido por nossos curadores locais` },
+            { time: '15:30', title: `Passeios com foco nas suas preferências (${interests.join(', ') || 'lazer'})` },
+            { time: '20:30', title: budget === 'luxury' ? `Jantar vip em restaurante conceituado` : `Jantar em bistrô tradicional com receitas artesanais` }
+          ]
+        });
+      }
+    } else if (finalDays.length > targetDaysCount) {
+      finalDays = finalDays.slice(0, targetDaysCount);
+    }
   }
 
   return (
@@ -688,7 +739,7 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
       <main className="flex-grow">
         {/* Planner Hero Header */}
-        <section className="container mx-auto px-6 pt-36 pb-12 text-center max-w-3xl">
+        <section className="container mx-auto px-6 pt-36 pb-8 text-center max-w-3xl">
           <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1.5 rounded-full w-fit mx-auto">
             ALGORITMO DE CURADORIA
           </span>
@@ -696,28 +747,28 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
             Planeje sua jornada.
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-text-muted max-w-[600px] mx-auto leading-relaxed">
-            {preselectedDestinationSlug ? `Crie seu roteiro ideal para ${activeItinerary.name || destination} em segundos.` : 'Escolha suas preferências e deixe nossa tecnologia criar o roteiro personalizado perfeito em segundos.'}
+            {preselectedDestinationSlug ? `Crie seu roteiro ideal para ${activeItinerary?.name || destination} em segundos.` : 'Escolha suas preferências e deixe nossa tecnologia criar o roteiro personalizado perfeito em segundos.'}
           </p>
         </section>
 
         {/* Wizard Form and Results */}
-        <section className="py-12 bg-bg-light">
-          <div className="container mx-auto px-6 max-w-4xl">
+        <section className="py-8 bg-bg-light">
+          <div className="container mx-auto px-6 max-w-[1440px] w-full">
             
             {/* 1. Step-by-step Wizard Form */}
             {!loading && !showResults && (
-              <div className="bg-white border border-border-gray p-8 md:p-12 rounded-[28px] shadow-md min-h-[420px] flex flex-col justify-between text-left">
+              <div className="bg-white border border-border-gray p-6 md:p-10 rounded-[28px] shadow-sm min-h-[420px] max-w-3xl mx-auto flex flex-col justify-between text-left">
                 
                 {/* Step 0: Destination */}
                 {step === 0 && (
                   <div className="animate-fade-in-up">
                     <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
-                      PASSO 1 DE 3
+                      PASSO 1 DE 6
                     </span>
                     <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
                       Para onde você vai viajar?
                     </h2>
-                    <p className="text-sm text-text-muted mt-2">Busque por país, cidade ou tipo de experiência.</p>
+                    <p className="text-xs text-text-muted mt-2">Busque por país, cidade ou tipo de experiência.</p>
                     
                     {/* Search Input */}
                     <div className="mt-5 relative">
@@ -732,206 +783,442 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
                     {/* Pre-search tags (Destinos Populares & Experiências) */}
                     {searchQuery === '' && (
-                      <div className="mt-6 flex flex-col gap-4">
-                        <div>
-                          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-2">Destinos Populares</span>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { id: 'toquio', label: 'Japão 🇯🇵' },
-                              { id: 'roma', label: 'Itália 🇮🇹' },
-                              { id: 'grecia', label: 'Grécia 🇬🇷' },
-                              { id: 'noruega', label: 'Noruega 🏔️' },
-                              { id: 'maldivas', label: 'Maldivas 🏖️' },
-                              { id: 'noronha', label: 'Noronha 🏝️' }
-                            ].map(tag => (
-                              <button
-                                key={tag.id}
-                                onClick={() => selectDestinationAndAdvance(tag.id)}
-                                className="px-3.5 py-2 rounded-full border border-border-gray hover:border-brand-navy text-xs font-bold text-brand-navy bg-white transition-all cursor-pointer hover:scale-[1.02] shadow-xs"
-                              >
-                                {tag.label}
-                              </button>
-                            ))}
-                          </div>
+                      <div className="mt-6">
+                        <span className="text-xs font-bold text-brand-navy uppercase tracking-wider block mb-3">
+                          🔥 Destinos Populares
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                          {[
+                            { id: 'paris', label: '🇫🇷 Paris, França', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=80' },
+                            { id: 'roma', label: '🇮🇹 Roma, Itália', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=400&q=80' },
+                            { id: 'toquio', label: '🇯🇵 Tóquio, Japão', img: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=400&q=80' },
+                            { id: 'noronha', label: '🇧🇷 F. de Noronha, Brasil', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=80' },
+                            { id: 'maldivas', label: '🇲🇻 Ilhas Maldivas', img: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=400&q=80' },
+                            { id: 'noruega', label: '🇳🇴 Tromsø, Noruega', img: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=400&q=80' }
+                          ].map(dest => (
+                            <button
+                              key={dest.id}
+                              type="button"
+                              onClick={() => selectDestinationAndAdvance(dest.id)}
+                              className="relative h-28 rounded-2xl overflow-hidden group shadow-sm hover:shadow-md cursor-pointer text-left focus:outline-none transition-all hover:scale-[1.02]"
+                            >
+                              <img 
+                                src={dest.img} 
+                                alt={dest.label}
+                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                              <span className="absolute bottom-3 left-3 text-xs sm:text-sm font-bold text-white leading-none">
+                                {dest.label}
+                              </span>
+                            </button>
+                          ))}
                         </div>
 
-                        <div>
-                          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-2">Experiências & Regiões</span>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { id: 'noronha', label: '👩‍❤️‍👨 Lua de Mel' },
-                              { id: 'noruega', label: '🌌 Aurora Boreal' },
-                              { id: 'safari', label: '🦁 Safári' },
-                              { id: 'gramado', label: '🍷 Vinícolas' },
-                              { id: 'roma', label: '🍝 Gastronomia' }
-                            ].map(tag => (
-                              <button
-                                key={tag.label}
-                                onClick={() => selectDestinationAndAdvance(tag.id)}
-                                className="px-3.5 py-2 rounded-full border border-border-gray hover:border-brand-orange text-xs font-semibold text-brand-navy bg-white transition-all cursor-pointer hover:scale-[1.02] shadow-xs"
-                              >
-                                {tag.label}
-                              </button>
-                            ))}
-                          </div>
+                        <span className="text-xs font-bold text-brand-navy uppercase tracking-wider block mb-3">
+                          ✨ Experiências &amp; Sugestões Sazonais
+                        </span>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {[
+                            { id: 'noronha', label: '👩‍❤️‍👨 Lua de Mel' },
+                            { id: 'noruega', label: '🌌 Aurora Boreal' },
+                            { id: 'safari', label: '🦁 Safári de Luxo' },
+                            { id: 'gramado', label: '🍷 Serra & Vinícolas' },
+                            { id: 'roma', label: '🍝 Gastronomia' },
+                            { id: 'veadeiros', label: '🌿 Bem-Estar & SPA' }
+                          ].map(tag => (
+                            <button
+                              key={tag.label}
+                              type="button"
+                              onClick={() => selectDestinationAndAdvance(tag.id)}
+                              className="px-4 py-2 rounded-full border border-border-gray hover:border-brand-orange text-xs font-semibold text-brand-navy bg-white transition-all cursor-pointer hover:scale-[1.02] shadow-xs"
+                            >
+                              {tag.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
-                      {[
-                        { id: 'paris', label: 'Paris, França', icon: '🇫🇷', desc: 'A capital da luz, museus e culinária.', tags: ['França', 'Europa', 'Romance', 'Cultura', 'Gastronomia'] },
-                        { id: 'roma', label: 'Roma, Itália', icon: '🇮🇹', desc: 'História milenar e praças barrocas.', tags: ['Itália', 'Europa', 'Cultura', 'Gastronomia', 'História', 'Vinícolas'] },
-                        { id: 'lisboa', label: 'Lisboa, Portugal', icon: '🇵🇹', desc: 'História, bondes e pastéis de nata.', tags: ['Portugal', 'Europa', 'Cultura', 'Litoral', 'Gastronomia'] },
-                        { id: 'londres', label: 'Londres, Reino Unido', icon: '🇬🇧', desc: 'Realeza, museus grátis e pubs.', tags: ['Reino Unido', 'Inglaterra', 'Europa', 'Cultura', 'História'] },
-                        { id: 'toquio', label: 'Tóquio, Japão', icon: '🇯🇵', desc: 'Arranha-céus neon e santuários.', tags: ['Japão', 'Ásia', 'Cultura', 'Tecnologia', 'Gastronomia'] },
-                        { id: 'noronha', label: 'Fernando de Noronha', icon: '🏝️', desc: 'Ecoturismo exclusivo e praias.', tags: ['Brasil', 'América do Sul', 'Praia', 'Ecoturismo', 'Lua de Mel', 'Romance'] },
-                        { id: 'rio', label: 'Rio de Janeiro', icon: '🏖️', desc: 'Cultura vibrante e charme carioca.', tags: ['Brasil', 'América do Sul', 'Praia', 'Cultura', 'Litoral'] },
-                        { id: 'veadeiros', label: 'Chapada dos Veadeiros', icon: '✨', desc: 'Misticismo e cachoeiras de cristal.', tags: ['Brasil', 'América do Sul', 'Cachoeira', 'Ecoturismo', 'Misticismo'] },
-                        { id: 'amazonas', label: 'Amazônia', icon: '🐆', desc: 'Eco-lodges e imersão profunda.', tags: ['Brasil', 'América do Sul', 'Floresta', 'Ecoturismo', 'Aventura', 'Safári'] },
-                        { id: 'gramado', label: 'Serra Gaúcha', icon: '🍷', desc: 'Vinho, fondue e charme europeu.', tags: ['Brasil', 'América do Sul', 'Serra', 'Vinícolas', 'Gastronomia', 'Romance'] },
-                        { id: 'noruega', label: 'Noruega', icon: '🏔️', desc: 'Fiordes, chalés de madeira e Aurora Boreal.', tags: ['Noruega', 'Europa', 'Fiordes', 'Aurora Boreal', 'Frio', 'Natureza'] },
-                        { id: 'maldivas', label: 'Maldivas', icon: '🏖️', desc: 'Bangalôs sobre a água e areia branca.', tags: ['Maldivas', 'Ásia', 'Praia', 'Romance', 'Lua de Mel', 'Ilhas'] },
-                        { id: 'grecia', label: 'Grécia', icon: '🇬🇷', desc: 'Santorini romântica e história em Atenas.', tags: ['Grécia', 'Europa', 'Praia', 'Romance', 'Lua de Mel', 'História'] },
-                        { id: 'safari', label: 'África do Sul', icon: '🦁', desc: 'Safáris de luxo e a Rota dos Vinhos.', tags: ['África do Sul', 'África', 'Safári', 'Natureza', 'Vinícolas', 'Aventura'] }
-                      ].filter(opt => {
-                        if (searchQuery === '') return true;
-                        const query = searchQuery.toLowerCase().trim();
-                        return (
-                          opt.label.toLowerCase().includes(query) ||
-                          opt.desc.toLowerCase().includes(query) ||
-                          opt.tags.some(tag => tag.toLowerCase().includes(query))
-                        );
-                      }).map(opt => (
-                        <button 
-                          key={opt.id}
-                          onClick={() => selectDestinationAndAdvance(opt.id)}
-                          className={`text-left p-4 sm:p-5 rounded-[20px] border transition-all duration-300 cursor-pointer flex flex-col gap-1.5 bg-white ${
-                            destination === opt.id 
-                              ? 'border-brand-navy bg-brand-navy/5 shadow-sm' 
-                              : 'border-border-gray hover:border-brand-navy/30 hover:shadow-md'
-                          }`}
-                        >
-                          <span className="text-2xl">{opt.icon}</span>
-                          <h4 className="font-headers text-base font-bold text-brand-navy">{opt.label}</h4>
-                          <p className="text-xs text-text-muted">{opt.desc}</p>
-                        </button>
-                      ))}
-                    </div>
+                    {searchQuery !== '' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                        {[
+                          { id: 'paris', label: 'Paris, França', icon: '🇫🇷', desc: 'A capital da luz, museus e culinária.', tags: ['França', 'Europa', 'Romance', 'Cultura', 'Gastronomia'] },
+                          { id: 'roma', label: 'Roma, Itália', icon: '🇮🇹', desc: 'História milenar e praças barrocas.', tags: ['Itália', 'Europa', 'Cultura', 'Gastronomia', 'História', 'Vinícolas'] },
+                          { id: 'lisboa', label: 'Lisboa, Portugal', icon: '🇵🇹', desc: 'História, bondes e pastéis de nata.', tags: ['Portugal', 'Europa', 'Cultura', 'Litoral', 'Gastronomia'] },
+                          { id: 'londres', label: 'Londres, Reino Unido', icon: '🇬🇧', desc: 'Realeza, museus grátis e pubs.', tags: ['Reino Unido', 'Inglaterra', 'Europa', 'Cultura', 'História'] },
+                          { id: 'toquio', label: 'Tóquio, Japão', icon: '🇯🇵', desc: 'Arranha-céus neon e santuários.', tags: ['Japão', 'Ásia', 'Cultura', 'Tecnologia', 'Gastronomia'] },
+                          { id: 'noronha', label: 'Fernando de Noronha, Brasil', icon: '🇧🇷', desc: 'Ecoturismo exclusivo e praias.', tags: ['Brasil', 'América do Sul', 'Praia', 'Ecoturismo', 'Lua de Mel', 'Romance'] },
+                          { id: 'rio', label: 'Rio de Janeiro, Brasil', icon: '🇧🇷', desc: 'Cultura vibrante e charme carioca.', tags: ['Brasil', 'América do Sul', 'Praia', 'Cultura', 'Litoral'] },
+                          { id: 'veadeiros', label: 'Chapada dos Veadeiros, Brasil', icon: '🇧🇷', desc: 'Misticismo e cachoeiras de cristal.', tags: ['Brasil', 'América do Sul', 'Cachoeira', 'Ecoturismo', 'Misticismo'] },
+                          { id: 'amazonas', label: 'Manaus & Selva, Brasil', icon: '🇧🇷', desc: 'Eco-lodges e imersão profunda.', tags: ['Brasil', 'América do Sul', 'Floresta', 'Ecoturismo', 'Aventura', 'Safári'] },
+                          { id: 'gramado', label: 'Gramado, Brasil', icon: '🇧🇷', desc: 'Vinho, fondue e charme europeu.', tags: ['Brasil', 'América do Sul', 'Serra', 'Vinícolas', 'Gastronomia', 'Romance'] },
+                          { id: 'noruega', label: 'Tromsø, Noruega', icon: '🇳🇴', desc: 'Fiordes, chalés de madeira e Aurora Boreal.', tags: ['Noruega', 'Europa', 'Fiordes', 'Aurora Boreal', 'Frio', 'Natureza'] },
+                          { id: 'maldivas', label: 'Ilhas Maldivas', icon: '🇲🇻', desc: 'Bangalôs sobre a água e areia branca.', tags: ['Maldivas', 'Ásia', 'Praia', 'Romance', 'Lua de Mel', 'Ilhas'] },
+                          { id: 'grecia', label: 'Santorini, Grécia', icon: '🇬🇷', desc: 'Santorini romântica e história em Atenas.', tags: ['Grécia', 'Europa', 'Praia', 'Romance', 'Lua de Mel', 'História'] },
+                          { id: 'safari', label: 'Kruger & Cape Town, África do Sul', icon: '🇿🇦', desc: 'Safáris de luxo e a Rota dos Vinhos.', tags: ['África do Sul', 'África', 'Safári', 'Natureza', 'Vinícolas', 'Aventura'] }
+                        ].filter(opt => {
+                          return matchesSearch(searchQuery, opt);
+                        }).map(opt => (
+                          <button 
+                            key={opt.id}
+                            type="button"
+                            onClick={() => selectDestinationAndAdvance(opt.id)}
+                            className={`text-left p-4 rounded-[20px] border transition-all duration-300 cursor-pointer flex items-center gap-4 bg-white ${
+                              destination === opt.id 
+                                ? 'border-brand-navy bg-brand-navy/5 shadow-xs' 
+                                : 'border-border-gray hover:border-brand-navy/30'
+                            }`}
+                          >
+                            <span className="text-3xl shrink-0">{opt.icon}</span>
+                            <div>
+                              <h4 className="font-headers text-sm font-bold text-brand-navy">{opt.label}</h4>
+                              <p className="text-[11px] text-text-muted mt-0.5">{opt.desc}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Step 1: Style */}
+                {/* Step 1: Dates & Month Selector */}
                 {step === 1 && (
                   <div className="animate-fade-in-up">
                     <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
-                      PASSO 2 DE 3
+                      PASSO 2 DE 6
                     </span>
                     <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
-                      Qual é o estilo da sua viagem?
+                      Quando você pretende viajar?
                     </h2>
-                    <p className="text-xs text-text-muted mt-2">Personalize a curadoria das atividades sugeridas.</p>
+                    <p className="text-xs text-text-muted mt-2">Selecione as datas exatas ou escolha um mês aproximado.</p>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
+                    {/* Toggle for exact dates */}
+                    <div className="mt-6 flex items-center gap-2.5 bg-bg-light border border-border-gray p-4 rounded-xl w-fit">
+                      <input 
+                        type="checkbox" 
+                        id="no-exact-dates"
+                        checked={noExactDates}
+                        onChange={(e) => {
+                          setNoExactDates(e.target.checked);
+                          if (e.target.checked) {
+                            setStartDate('');
+                            setEndDate('');
+                          } else {
+                            setApproximateMonth('');
+                          }
+                        }}
+                        className="w-4 h-4 rounded text-brand-orange focus:ring-brand-orange"
+                      />
+                      <label htmlFor="no-exact-dates" className="text-xs font-bold text-brand-navy cursor-pointer">
+                        Ainda não tenho datas exatas
+                      </label>
+                    </div>
+
+                    {!noExactDates ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                        <div className="flex flex-col gap-1.5 text-left">
+                          <label htmlFor="start-date" className="text-[10px] font-bold text-brand-navy uppercase tracking-wider">
+                            Data de Ida
+                          </label>
+                          <input 
+                            type="date"
+                            id="start-date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-border-gray bg-[#F8FAFC] text-brand-navy font-semibold focus:outline-none focus:border-brand-navy text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5 text-left">
+                          <label htmlFor="end-date" className="text-[10px] font-bold text-brand-navy uppercase tracking-wider">
+                            Data de Volta
+                          </label>
+                          <input 
+                            type="date"
+                            id="end-date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-border-gray bg-[#F8FAFC] text-brand-navy font-semibold focus:outline-none focus:border-brand-navy text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mt-6">
+                        {[
+                          'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                        ].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setApproximateMonth(m)}
+                            className={`py-3 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                              approximateMonth === m 
+                                ? 'bg-brand-navy border-brand-navy text-white shadow-xs' 
+                                : 'bg-white border-border-gray text-text-muted hover:border-brand-navy/40 hover:text-brand-navy'
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 2: Travelers Party */}
+                {step === 2 && (
+                  <div className="animate-fade-in-up">
+                    <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
+                      PASSO 3 DE 6
+                    </span>
+                    <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
+                      Quem vai viajar com você?
+                    </h2>
+                    <p className="text-xs text-text-muted mt-2">Escolha a companhia e indique se há necessidades especiais.</p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                       {[
-                        { id: 'aventura', label: 'Aventura & Ação', icon: '🧗', desc: 'Trilhas, mirantes desafiadores e esportes ao ar livre.' },
-                        { id: 'cultura', label: 'Cultural & Histórico', icon: '🏛️', desc: 'Museus renomados, monumentos históricos e passeios guiados.' },
-                        { id: 'natureza', label: 'Natureza & Bem-Estar', icon: '🌿', desc: 'Spas relaxantes, refúgios naturais e águas termais.' },
-                        { id: 'gastronomia', label: 'Alta Gastronomia', icon: '🍽️', desc: 'Festivais gastronômicos, risoterias e jantares exclusivos.' }
+                        { id: 'solo', label: 'Viajar Solo 👤', desc: 'Aventura própria.' },
+                        { id: 'casal', label: 'Em Casal 👩‍❤️‍👨', desc: 'Roteiro romântico.' },
+                        { id: 'familia', label: 'Em Família 👨‍👩‍👧‍👦', desc: 'Foco no lazer.' },
+                        { id: 'grupo', label: 'Com Amigos 👥', desc: 'Diversão em grupo.' }
                       ].map(opt => (
-                        <button 
+                        <button
                           key={opt.id}
-                          onClick={() => selectStyleAndAdvance(opt.id)}
-                          className={`text-left p-6 rounded-[20px] border transition-all duration-300 cursor-pointer flex flex-col gap-2 bg-white ${
-                            style === opt.id 
-                              ? 'border-brand-navy bg-brand-navy/5 shadow-sm' 
-                              : 'border-border-gray hover:border-brand-navy/30 hover:shadow-md'
+                          type="button"
+                          onClick={() => setTravelers(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex flex-col gap-1 bg-white ${
+                            travelers === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs' 
+                              : 'border-border-gray hover:border-brand-navy/30'
                           }`}
                         >
-                          <span className="text-3xl">{opt.icon}</span>
-                          <h4 className="font-headers text-base font-bold text-brand-navy">{opt.label}</h4>
-                          <p className="text-sm text-text-muted">{opt.desc}</p>
+                          <span className="text-xs font-bold text-brand-navy leading-none">{opt.label}</span>
+                          <span className="text-[9px] text-text-muted mt-1 leading-none">{opt.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-8 mb-3 uppercase tracking-wider">Necessidades Especiais</h3>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {[
+                        { id: 'não', label: 'Sem Crianças ou Idosos ✈️', desc: 'Ritmo normal.' },
+                        { id: 'sim', label: 'Viajando com Crianças/Idosos 👶👵', desc: 'Ritmo leve e acessível.' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setHasKidsOrSeniors(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex-1 flex flex-col gap-1 bg-white ${
+                            hasKidsOrSeniors === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs' 
+                              : 'border-border-gray hover:border-brand-navy/30'
+                          }`}
+                        >
+                          <span className="text-xs font-bold text-brand-navy leading-none">{opt.label}</span>
+                          <span className="text-[9px] text-text-muted mt-1 leading-none">{opt.desc}</span>
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Step 2: Duration and budget */}
-                {step === 2 && (
+                {/* Step 3: Budget & Pace */}
+                {step === 3 && (
                   <div className="animate-fade-in-up">
                     <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
-                      PASSO 3 DE 3
+                      PASSO 4 DE 6
                     </span>
                     <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
-                      Duração e Orçamento
+                      Orçamento e Ritmo da Viagem
                     </h2>
-                    <p className="text-sm text-text-muted mt-2">Ajuste o período desejado e nível de conforto da viagem.</p>
-                    
-                    <h3 className="text-sm font-headers text-brand-navy/80 font-bold mt-6 mb-3 uppercase tracking-wider">Duração da Viagem</h3>
+                    <p className="text-xs text-text-muted mt-2">Escolha como prefere gastar e o ritmo ideal de deslocamento.</p>
+
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-6 mb-3 uppercase tracking-wider">Perfil Financeiro</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
-                        { id: '3', label: 'Curta (3 Dias)', icon: '⏱️', desc: 'Foco no essencial.' },
-                        { id: '5', label: 'Padrão (5 Dias)', icon: '🗓️', desc: 'Exploração ideal.' },
-                        { id: '7', label: 'Imersiva (7 Dias)', icon: '✈️', desc: 'Sem pressa.' }
+                        { id: 'economy', label: 'Econômico/Mochileiro 🎒', desc: 'Atrações baratas e hostels.' },
+                        { id: 'comfort', label: 'Padrão Confortável 🧳', desc: 'Hospedagem 3/4★ e ótimos bistrôs.' },
+                        { id: 'luxury', label: 'Alto Luxo Premium 👑', desc: 'Hotéis 5★ e restaurantes Michelin.' }
                       ].map(opt => (
-                        <button 
+                        <button
                           key={opt.id}
-                          onClick={() => setDuration(opt.id)}
-                          className={`text-left p-5 rounded-[20px] border transition-all duration-300 cursor-pointer flex flex-col gap-1 bg-white ${
-                            duration === opt.id 
-                              ? 'border-brand-navy bg-brand-navy/5 shadow-sm' 
-                              : 'border-border-gray hover:border-brand-navy/30 hover:shadow-md'
+                          type="button"
+                          onClick={() => setBudget(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex flex-col gap-1 bg-white ${
+                            budget === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs' 
+                              : 'border-border-gray hover:border-brand-navy/30'
                           }`}
                         >
-                          <span className="text-2xl">{opt.icon}</span>
-                          <h4 className="font-headers text-sm font-bold text-brand-navy">{opt.label}</h4>
-                          <p className="text-xs text-text-muted">{opt.desc}</p>
+                          <span className="text-xs font-bold text-brand-navy leading-none">{opt.label}</span>
+                          <span className="text-[9px] text-text-muted mt-1 leading-none">{opt.desc}</span>
                         </button>
                       ))}
                     </div>
 
-                    <h3 className="text-sm font-headers text-brand-navy/80 font-bold mt-6 mb-3 uppercase tracking-wider">Orçamento Estimado</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-8 mb-3 uppercase tracking-wider">Ritmo Diário</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
-                        { id: 'moderado', label: 'Padrão Moderado', icon: '💳', desc: 'Curadoria gastronômica de ótimo custo.' },
-                        { id: 'luxo', label: 'Alto Luxo Premium', icon: '👑', desc: 'Experiências vips exclusivas e iates.' }
+                        { id: 'lento', label: 'Lento e Relaxado 🐌', desc: 'Poucas atrações, com tempo de descanso.' },
+                        { id: 'moderado', label: 'Moderado Equilibrado 🚶‍♂️', desc: 'Exploração ideal, sem correrias extremas.' },
+                        { id: 'acelerado', label: 'Acelerado e Intenso 🏃‍♂️', desc: 'Ver o máximo possível por dia.' }
                       ].map(opt => (
-                        <button 
+                        <button
                           key={opt.id}
-                          onClick={() => setBudget(opt.id)}
-                          className={`text-left p-5 rounded-[20px] border transition-all duration-300 cursor-pointer flex flex-col gap-1 bg-white ${
-                            budget === opt.id 
-                              ? 'border-brand-navy bg-brand-navy/5 shadow-sm' 
-                              : 'border-border-gray hover:border-brand-navy/30 hover:shadow-md'
+                          type="button"
+                          onClick={() => setPace(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex flex-col gap-1 bg-white ${
+                            pace === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs' 
+                              : 'border-border-gray hover:border-brand-navy/30'
                           }`}
                         >
-                          <span className="text-2xl">{opt.icon}</span>
-                          <h4 className="font-headers text-sm font-bold text-brand-navy">{opt.label}</h4>
-                          <p className="text-xs text-text-muted">{opt.desc}</p>
+                          <span className="text-xs font-bold text-brand-navy leading-none">{opt.label}</span>
+                          <span className="text-[9px] text-text-muted mt-1 leading-none">{opt.desc}</span>
                         </button>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Estilo & Interesses */}
+                {step === 4 && (
+                  <div className="animate-fade-in-up">
+                    <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
+                      PASSO 5 DE 6
+                    </span>
+                    <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
+                      Estilo e Interesses
+                    </h2>
+                    <p className="text-xs text-text-muted mt-2">Indique suas atividades preferidas para a curadoria local.</p>
+
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-6 mb-3 uppercase tracking-wider">Estilo Principal</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { id: 'aventura', label: '🧗 Aventura & Natureza' },
+                        { id: 'cultura', label: '🏛️ História & Cultura' },
+                        { id: 'natureza', label: '🌿 Relax & Bem-Estar' },
+                        { id: 'gastronomia', label: '🍽️ Alta Gastronomia' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setStyle(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex flex-col justify-center bg-white ${
+                            style === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs font-bold text-brand-navy' 
+                              : 'border-border-gray hover:border-brand-navy/30 text-text-muted'
+                          }`}
+                        >
+                          <span className="text-xs font-bold leading-none">{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-8 mb-3 uppercase tracking-wider">Áreas de Interesse (Selecione múltiplos)</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        'Museus & Galerias', 'Praias & Litoral', 'Cachoeiras & Trilhas',
+                        'Restaurantes Premium', 'Compras & Outlets', 'Vida Noturna & Baladas',
+                        'Arquitetura Histórica', 'Parques de Diversão', 'Fotografia & Paisagens'
+                      ].map(tag => {
+                        const isSelected = interests.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setInterests(interests.filter(i => i !== tag));
+                              } else {
+                                setInterests([...interests, tag]);
+                              }
+                            }}
+                            className={`px-3.5 py-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'bg-brand-navy border-brand-navy text-white shadow-xs' 
+                                : 'bg-white border-border-gray text-text-muted hover:border-brand-navy/40'
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Alimentação & Restrições */}
+                {step === 5 && (
+                  <div className="animate-fade-in-up">
+                    <span className="bg-brand-navy/10 text-brand-navy text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
+                      PASSO 6 DE 6
+                    </span>
+                    <h2 className="font-headers text-2xl md:text-3xl font-bold mt-4 text-brand-navy">
+                      Alimentação e Restrições
+                    </h2>
+                    <p className="text-xs text-text-muted mt-2">Personalize a filtragem de restaurantes e locais para comer.</p>
+
+                    <h3 className="text-xs font-headers text-brand-navy/80 font-bold mt-6 mb-3 uppercase tracking-wider">Preferência Alimentar</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { id: 'nenhuma', label: 'Sem Restrições 🥩' },
+                        { id: 'vegetariano', label: 'Vegetariano 🥗' },
+                        { id: 'vegano', label: 'Vegano 🌱' },
+                        { id: 'gluten-free', label: 'Sem Glúten 🌾' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setDiet(opt.id)}
+                          className={`text-left p-4 rounded-[20px] border transition-all cursor-pointer flex flex-col justify-center bg-white ${
+                            diet === opt.id 
+                              ? 'border-brand-navy bg-brand-navy/5 shadow-xs font-bold text-brand-navy' 
+                              : 'border-border-gray hover:border-brand-navy/30 text-text-muted'
+                          }`}
+                        >
+                          <span className="text-xs font-bold leading-none">{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col gap-2 mt-8 text-left">
+                      <label htmlFor="custom-restrictions" className="text-[10px] font-bold font-headers text-brand-navy uppercase tracking-wider">
+                        Outras Restrições ou Preferências Específicas (Opcional)
+                      </label>
+                      <textarea
+                        id="custom-restrictions"
+                        rows="3"
+                        value={restrictions}
+                        onChange={(e) => setRestrictions(e.target.value)}
+                        className="w-full bg-[#F8FAFC] border border-border-gray px-4 py-3 rounded-xl text-xs font-semibold text-brand-navy placeholder:text-text-muted/45 focus:outline-none focus:border-brand-navy focus:bg-white transition-all shadow-xs resize-none"
+                        placeholder="Ex: Alergia severa a frutos do mar, prefiro cafés locais em vez de redes, etc."
+                      />
                     </div>
                   </div>
                 )}
 
                 {/* Navigation Controls */}
-                <div className="flex justify-between items-center mt-12 pt-6 border-t border-border-gray w-full">
+                <div className="flex justify-between items-center mt-10 pt-6 border-t border-border-gray/50 w-full">
                   <button 
                     onClick={handlePrev} 
                     disabled={preselectedDestinationSlug ? step === 1 : step === 0}
-                    className="btn btn-outline cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                    className="btn btn-outline cursor-pointer disabled:opacity-30 disabled:pointer-events-none py-2 text-xs"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                    <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Voltar
                   </button>
                   <button 
                     onClick={handleNext} 
                     disabled={isNextDisabled()}
-                    className={`btn cursor-pointer ${
-                      step === 2 ? 'btn-primary' : 'btn-outline'
+                    className={`btn cursor-pointer py-2 text-xs ${
+                      step === 5 ? 'btn-primary' : 'btn-outline'
                     } disabled:opacity-30 disabled:pointer-events-none`}
                   >
-                    {step === 2 ? 'Gerar Roteiro' : 'Avançar'} <ArrowRight className="w-4 h-4 ml-2" />
+                    {step === 5 ? 'Gerar Roteiro' : 'Avançar'} <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                   </button>
                 </div>
 
@@ -940,9 +1227,9 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
             {/* 2. Loading Sequence */}
             {loading && (
-              <div className="bg-white border border-border-gray p-12 rounded-[28px] shadow-md flex flex-col items-center justify-center gap-6 py-20 text-center animate-fade-in-up">
+              <div className="bg-white border border-border-gray p-12 rounded-[28px] max-w-lg mx-auto shadow-sm flex flex-col items-center justify-center gap-6 py-20 text-center animate-fade-in-up">
                 <div className="w-12 h-12 border-4 border-border-gray border-t-brand-orange rounded-full animate-spin"></div>
-                <h3 className="font-headers text-xl md:text-2xl font-bold text-brand-navy mt-2">
+                <h3 className="font-headers text-lg md:text-xl font-bold text-brand-navy mt-2">
                   {loadingText}
                 </h3>
                 <p className="text-xs text-text-muted">Analisando parâmetros locais...</p>
@@ -951,28 +1238,37 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
             {/* 3. Planner Results Panel */}
             {showResults && (
-              <div className="animate-fade-in-up">
+              <div className="animate-fade-in-up max-w-[1440px] w-full mx-auto">
                 {/* Results Header */}
-                <div className="bg-white border border-border-gray p-6 sm:p-8 rounded-[24px] shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-left">
+                <div className="bg-white border border-border-gray p-6 sm:p-8 rounded-[28px] shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-left">
                   <div>
                     <span className="bg-brand-orange text-white text-[10px] font-extrabold tracking-widest px-3 py-1 rounded-full w-fit">
                       ROTEIRO PERSONALIZADO
                     </span>
-                    <h2 className="font-headers text-2xl md:text-3.5xl font-bold text-brand-navy mt-3 leading-tight">
+                    <h2 className="font-headers text-2xl md:text-3.5xl font-bold text-brand-navy mt-3 leading-tight font-extrabold">
                       {activeItinerary.title}
                     </h2>
-                    <p className="text-xs sm:text-sm text-text-muted mt-2 max-w-[500px] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-text-muted mt-2 max-w-[600px] leading-relaxed">
                       {activeItinerary.desc}
                     </p>
                   </div>
                   
                   <div className="flex gap-3 w-full md:w-auto shrink-0">
-                    <button 
-                      onClick={() => setIsDownloadOpen(true)}
-                      className="btn btn-primary justify-center shadow-sm cursor-pointer flex-1 sm:flex-initial"
-                    >
-                      <Smartphone className="w-4 h-4 mr-2" /> Salvar no App
-                    </button>
+                    {isUnlocked ? (
+                      <button 
+                        onClick={() => setIsDownloadOpen(true)}
+                        className="btn btn-primary justify-center shadow-sm cursor-pointer flex-1 sm:flex-initial"
+                      >
+                        <Smartphone className="w-4 h-4 mr-2" /> Salvar no App
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => setIsCheckoutOpen(true)}
+                        className="btn btn-secondary justify-center shadow-sm cursor-pointer flex-1 sm:flex-initial"
+                      >
+                        <Lock className="w-4 h-4 mr-2" /> Desbloquear Completo
+                      </button>
+                    )}
                     <button 
                       onClick={handleReset}
                       className="btn btn-outline cursor-pointer px-4"
@@ -983,7 +1279,7 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                   </div>
                 </div>
 
-                {/* Conversion Hook Warning */}
+                {/* Info Banners */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   <div className="bg-brand-navy/5 border border-brand-navy/10 p-6 rounded-[20px] flex gap-4 text-left items-start">
                     <ShieldAlert className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
@@ -992,7 +1288,7 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                         Utilize Offline no seu Celular
                       </span>
                       <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        Baixe o app 2GO para usar este roteiro com mapas offline ativos, GPS e controle de gastos em tempo real durante a viagem.
+                        Importe para o app 2GO para usar este roteiro com mapas offline ativos, GPS e controle de gastos em tempo real durante a viagem.
                       </p>
                     </div>
                   </div>
@@ -1004,7 +1300,7 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                         A tecnologia organiza. Especialistas aperfeiçoam.
                       </span>
                       <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        Seu roteiro foi desenhado com tecnologia de ponta. Deseja que especialistas revisem sua logística e incluam serviços vip? Ative o suporte no app.
+                        Seu roteiro foi desenhado com tecnologia de ponta. Deseja que especialistas revisem sua logística e incluam serviços VIP? Ative o suporte no app.
                       </p>
                     </div>
                   </div>
@@ -1012,13 +1308,13 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
 
                 {/* Day-by-Day Timeline */}
                 <div className="relative pl-8 flex flex-col gap-6 before:content-[''] before:absolute before:top-0 before:left-3.5 before:w-[2px] before:h-full before:bg-border-gray text-left">
-                  {activeItinerary.days.map((day, idx) => {
+                  {finalDays.map((day, idx) => {
                     const isGated = idx > 0 && !isUnlocked;
 
                     return (
                       <div 
                         key={idx} 
-                        className={`relative bg-white border border-border-gray p-6 rounded-[20px] shadow-sm transition-all duration-300 ${
+                        className={`relative bg-white border border-border-gray p-6 rounded-[24px] shadow-sm transition-all duration-300 ${
                           isGated ? 'min-h-[220px] overflow-hidden' : ''
                         }`}
                       >
@@ -1050,12 +1346,12 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                             </div>
                             
                             {/* Locking Overlay Card */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-xs p-6 text-center z-10">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs p-6 text-center z-10">
                               <Lock className="w-8 h-8 text-brand-orange mb-2 animate-[bounce_3s_infinite_ease-in-out]" />
-                              <h4 className="font-headers text-sm font-extrabold text-brand-navy">Roteiro Bloqueado</h4>
-                              <p className="text-[10px] text-text-muted mt-1 mb-4 max-w-[280px]">Insira seus dados para liberar todos os dias, horários e transporte off-line.</p>
+                              <h4 className="font-headers text-sm font-extrabold text-brand-navy">Roteiro Completo Bloqueado</h4>
+                              <p className="text-[10px] text-text-muted mt-1 mb-4 max-w-[280px]">Desbloqueie o roteiro para liberar todos os dias, horários e transporte off-line.</p>
                               <button 
-                                onClick={() => setIsLeadWallOpen(true)} 
+                                onClick={() => setIsCheckoutOpen(true)} 
                                 className="btn btn-secondary btn-sm shadow-md shadow-brand-orange/20 cursor-pointer text-xs"
                               >
                                 Desbloquear Roteiro Completo
@@ -1063,8 +1359,27 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                             </div>
                           </>
                         ) : (
-                          /* Unlocked / Day 1 Full Display */
+                          /* Unlocked / Day 1 Full Display (Fase 4.1 UI) */
                           <>
+                            {idx === 0 && (
+                              <div className="mb-6 rounded-2xl overflow-hidden border border-border-gray/30 relative h-48 bg-brand-navy text-white shadow-xs">
+                                <img 
+                                  src={destinationImages[destination] || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80'} 
+                                  alt={activeItinerary.name} 
+                                  className="w-full h-full object-cover opacity-60"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                <div className="absolute bottom-4 left-4 right-4 text-left">
+                                  <span className="bg-brand-orange text-white text-[9px] font-extrabold tracking-widest px-2.5 py-1 rounded-full uppercase font-headers">
+                                    PRIMEIRO DIA DE VIAGEM
+                                  </span>
+                                  <h4 className="font-headers text-lg sm:text-xl font-bold mt-1.5 leading-tight">
+                                    Chegada e ambientação em {activeItinerary.name || destination}
+                                  </h4>
+                                </div>
+                              </div>
+                            )}
+
                             <span className="font-headers text-xs font-bold text-brand-orange uppercase tracking-wider">
                               {day.day}
                             </span>
@@ -1072,16 +1387,58 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
                               {day.title}
                             </h3>
                             
-                            <ul className="flex flex-col gap-3.5 list-none m-0 p-0">
-                              {day.events.map((evt, eIdx) => (
-                                <li key={eIdx} className="flex gap-4 text-xs sm:text-sm text-text-main items-start">
-                                  <span className="font-headers text-[10px] font-bold text-brand-navy bg-bg-light border border-border-gray px-2 py-0.5 rounded mt-0.5 whitespace-nowrap">
-                                    {evt.time}
-                                  </span>
-                                  <div className="leading-relaxed mt-0.5">{evt.title}</div>
-                                </li>
-                              ))}
-                            </ul>
+                            <div className="flex flex-col gap-4">
+                              {day.events.map((evt, eIdx) => {
+                                let icon = <Compass className="w-4 h-4 text-brand-navy" />;
+                                if (evt.title.toLowerCase().includes('check-in') || evt.title.toLowerCase().includes('hotel') || evt.title.toLowerCase().includes('pousada')) {
+                                  icon = <span className="text-sm">🏨</span>;
+                                } else if (evt.title.toLowerCase().includes('jantar') || evt.title.toLowerCase().includes('almoço') || evt.title.toLowerCase().includes('comer') || evt.title.toLowerCase().includes('restaurante')) {
+                                  icon = <span className="text-sm">🍴</span>;
+                                } else if (evt.title.toLowerCase().includes('transfer') || evt.title.toLowerCase().includes('voo') || evt.title.toLowerCase().includes('helicóptero') || evt.title.toLowerCase().includes('barco') || evt.title.toLowerCase().includes('buggy') || evt.title.toLowerCase().includes('táxi')) {
+                                  icon = <span className="text-sm">🚗</span>;
+                                } else if (evt.title.toLowerCase().includes('sunset') || evt.title.toLowerCase().includes('pôr do sol') || evt.title.toLowerCase().includes('vista')) {
+                                  icon = <span className="text-sm">🌅</span>;
+                                }
+
+                                return (
+                                  <div key={eIdx} className="flex gap-4 items-start bg-bg-light/30 border border-border-gray/30 p-4 rounded-xl shadow-xs">
+                                    <div className="w-10 h-10 rounded-lg bg-white border border-border-gray flex items-center justify-center shrink-0 shadow-xs font-mono text-[10px] font-bold text-brand-navy">
+                                      {evt.time}
+                                    </div>
+                                    <div className="flex-grow">
+                                      <h4 className="text-xs sm:text-sm font-bold text-brand-navy flex items-center gap-1.5">
+                                        {icon}
+                                        <span>{evt.title}</span>
+                                      </h4>
+                                      <p className="text-[11px] text-text-muted mt-1 leading-relaxed">
+                                        Curadoria premium otimizada para deslocamento e aproveitamento inteligente.
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {idx === 0 && (
+                              <div className="mt-6 border border-brand-navy/10 bg-brand-navy/5 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div className="text-left">
+                                  <span className="text-[10px] font-bold text-brand-navy uppercase tracking-wider block">📍 MAPA INTERATIVO</span>
+                                  <p className="text-[11px] text-text-muted mt-0.5 leading-relaxed">Rota do primeiro dia otimizada com tempos de trânsito em tempo real.</p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    if (isUnlocked) {
+                                      setIsDownloadOpen(true);
+                                    } else {
+                                      setIsCheckoutOpen(true);
+                                    }
+                                  }}
+                                  className="btn btn-outline py-2 px-4 text-xs font-bold shrink-0 cursor-pointer"
+                                >
+                                  {isUnlocked ? 'Ver Mapa Completo' : 'Desbloquear Mapa'}
+                                </button>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
@@ -1128,11 +1485,12 @@ export default function PlannerClient({ preselectedDestinationSlug }) {
         onClose={() => setIsDownloadOpen(false)} 
       />
 
-      <LeadWallModal 
-        isOpen={isLeadWallOpen}
-        onClose={() => setIsLeadWallOpen(false)}
-        onUnlock={handleUnlockSuccess}
-        destinationName={activeItinerary.name}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        destinationName={activeItinerary?.name || destination}
+        itinerarySlug={destination}
+        onSuccess={handleUnlockSuccess}
       />
     </div>
   );

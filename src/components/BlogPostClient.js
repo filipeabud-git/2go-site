@@ -69,7 +69,7 @@ export default function BlogPostClient({ post }) {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-4xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[
             { name: 'Blog', url: '/blog' },
@@ -157,13 +157,13 @@ export default function BlogPostClient({ post }) {
               {/* Consulting Promo */}
               <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-3">
                 <span className="text-[8.5px] font-extrabold text-brand-orange uppercase tracking-wider">SUPORTE EXCLUSIVO</span>
-                <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">Quer curadoria humana?</h4>
+                <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">Quer Consultoria Premium?</h4>
                 <p className="text-[11px] text-text-muted leading-relaxed">Fale com um consultor local premium da 2GO para planejar sua rota detalhada dia a dia e fechar todas as suas reservas.</p>
                 <Link 
                   href="/premium"
                   className="btn btn-outline py-2.5 text-xs text-center justify-center font-bold mt-2"
                 >
-                  Falar com Especialista
+                  Falar com especialista
                 </Link>
               </div>
 

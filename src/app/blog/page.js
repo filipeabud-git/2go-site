@@ -30,7 +30,7 @@ export default function Blog() {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[{ name: 'Blog', url: '/blog' }]} />
 

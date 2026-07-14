@@ -211,22 +211,22 @@ export default function WhatToDoClient({ destination }) {
                 </div>
                 <Link 
                   href={`/planejamento/${destination.slug}`}
-                  className="btn btn-secondary py-3 text-xs justify-center font-bold text-center w-full bg-brand-orange text-white hover:bg-white hover:text-brand-navy transition-all"
+                  className="btn btn-secondary py-3 text-xs justify-center font-bold text-center w-full bg-brand-orange text-white hover:bg-white hover:text-brand-navy transition-all border-none cursor-pointer flex items-center"
                 >
-                  Gerar Roteiro Grátis
+                  Criar roteiro
                 </Link>
               </div>
 
               {/* Consulting promo */}
               <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-3">
-                <span className="text-[8.5px] font-extrabold text-brand-orange uppercase tracking-wider">CURADORIA HUMANA</span>
+                <span className="text-[8.5px] font-extrabold text-brand-orange uppercase tracking-wider">CONSULTORIA PREMIUM</span>
                 <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">Quer suporte de especialistas?</h4>
                 <p className="text-[11px] text-text-muted leading-relaxed">Conecte-se com um consultor local premium da 2GO para criar um roteiro 100% sob medida e fechar reservas.</p>
                 <Link 
                   href="/premium"
                   className="btn btn-outline py-2.5 text-xs text-center justify-center font-bold mt-2"
                 >
-                  Falar com Consultor
+                  Falar com especialista
                 </Link>
               </div>
 

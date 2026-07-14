@@ -13,7 +13,7 @@ import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import AppDownloadModal from './AppDownloadModal';
-import LeadWallModal from './LeadWallModal';
+import CheckoutModal from './CheckoutModal';
 import NewsletterBox from './NewsletterBox';
 import AffiliateDeals from './AffiliateDeals';
 import JsonLd from './JsonLd';
@@ -37,10 +37,13 @@ const EVENT_IMAGES = {
 
 export default function ItineraryClient({ itinerary, destination }) {
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [activeMenuEventIdx, setActiveMenuEventIdx] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
   
   // Real-time Countdown and Tabs state
   const [activeDayIndex, setActiveDayIndex] = useState(0);
@@ -72,7 +75,9 @@ export default function ItineraryClient({ itinerary, destination }) {
     trackPageView('itinerary', itinerary.slug);
     
     if (typeof window !== 'undefined') {
-      const unlocked = localStorage.getItem('itinerary_unlocked_all') === 'true' || 
+      const purchased = JSON.parse(localStorage.getItem('purchased_roteiros') || '[]');
+      const unlocked = purchased.includes(itinerary.slug) || 
+                       localStorage.getItem('itinerary_unlocked_all') === 'true' || 
                        localStorage.getItem(`itinerary_unlocked_${itinerary.slug}`) === 'true';
       if (unlocked) {
         setIsUnlocked(true);
@@ -80,12 +85,27 @@ export default function ItineraryClient({ itinerary, destination }) {
     }
   }, [itinerary.slug]);
 
+  // Click outside listener for action dropdown
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveMenuEventIdx(null);
+    };
+    if (activeMenuEventIdx !== null) {
+      window.addEventListener('click', handleOutsideClick);
+    }
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, [activeMenuEventIdx]);
+
   if (!itinerary) return null;
 
   const handleUnlock = () => {
     if (typeof window !== 'undefined') {
+      const purchased = JSON.parse(localStorage.getItem('purchased_roteiros') || '[]');
+      if (!purchased.includes(itinerary.slug)) {
+        purchased.push(itinerary.slug);
+        localStorage.setItem('purchased_roteiros', JSON.stringify(purchased));
+      }
       localStorage.setItem(`itinerary_unlocked_${itinerary.slug}`, 'true');
-      localStorage.setItem('itinerary_unlocked_all', 'true');
     }
     setIsUnlocked(true);
     
@@ -93,7 +113,8 @@ export default function ItineraryClient({ itinerary, destination }) {
     confetti({
       particleCount: 150,
       spread: 80,
-      origin: { y: 0.6 }
+      origin: { y: 0.6 },
+      colors: ['#081B6B', '#F47A20', '#96AB21']
     });
   };
 
@@ -107,6 +128,28 @@ export default function ItineraryClient({ itinerary, destination }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  // Three dots menu helpers (Fase 5.4)
+  const handleCopyEventLink = (title) => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}${window.location.pathname}?event=${encodeURIComponent(title)}`;
+      navigator.clipboard.writeText(url);
+      showToast('Link da atração copiado!');
+    }
+  };
+
+  const handleSaveEvent = (title) => {
+    showToast(`✓ "${title}" salvo nos favoritos!`);
+  };
+
+  const handleReportEvent = (title) => {
+    showToast('Obrigado! Enviado para revisão.');
+  };
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   // Generate dynamic date labels starting from today
@@ -170,8 +213,55 @@ export default function ItineraryClient({ itinerary, destination }) {
     );
   };
 
+  // Action menu dropdown UI
+  const renderActionDropdown = (event, eIdx) => {
+    if (activeMenuEventIdx !== eIdx) return null;
+
+    return (
+      <div className="absolute right-0 mt-6 w-44 bg-white border border-border-gray rounded-xl shadow-lg z-50 py-1.5 animate-fade-in text-xs font-semibold text-brand-navy text-left">
+        <button
+          onClick={() => {
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.title + ' ' + destName)}`;
+            window.open(url, '_blank');
+            setActiveMenuEventIdx(null);
+          }}
+          className="w-full px-4 py-2 hover:bg-bg-light hover:text-brand-orange text-left flex items-center gap-2 cursor-pointer"
+        >
+          📍 Abrir no Mapa
+        </button>
+        <button
+          onClick={() => {
+            handleSaveEvent(event.title);
+            setActiveMenuEventIdx(null);
+          }}
+          className="w-full px-4 py-2 hover:bg-bg-light hover:text-brand-orange text-left flex items-center gap-2 cursor-pointer"
+        >
+          ⭐ Salvar Atração
+        </button>
+        <button
+          onClick={() => {
+            handleCopyEventLink(event.title);
+            setActiveMenuEventIdx(null);
+          }}
+          className="w-full px-4 py-2 hover:bg-bg-light hover:text-brand-orange text-left flex items-center gap-2 cursor-pointer"
+        >
+          🔗 Compartilhar
+        </button>
+        <button
+          onClick={() => {
+            handleReportEvent(event.title);
+            setActiveMenuEventIdx(null);
+          }}
+          className="w-full px-4 py-2 hover:bg-bg-light hover:text-red-500 text-left flex items-center gap-2 cursor-pointer border-t border-border-gray/50 mt-1 pt-1.5"
+        >
+          ⚠️ Reportar Info
+        </button>
+      </div>
+    );
+  };
+
   // Renders the specific card style based on keyword detection
-  const renderEventCard = (event) => {
+  const renderEventCard = (event, eIdx) => {
     const title = event.title;
     const desc = event.desc || '';
     const t = title.toLowerCase();
@@ -195,7 +285,7 @@ export default function ItineraryClient({ itinerary, destination }) {
     if (isAccomodation || isBreakfast || isMeal) {
       // Note-style card (Simple, clean layout)
       return (
-        <div className="flex-grow bg-white border border-border-gray/70 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-4">
+        <div className="flex-grow bg-white border border-border-gray/70 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-4 relative">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-bg-light flex items-center justify-center shrink-0">
               {icon}
@@ -205,9 +295,18 @@ export default function ItineraryClient({ itinerary, destination }) {
               <p className="text-[10px] text-text-muted mt-0.5">{desc || (isBreakfast ? 'Ver recomendações' : isAccomodation ? 'Para otimizar o deslocamento' : 'Horário livre para refeição')}</p>
             </div>
           </div>
-          <button className="text-text-muted hover:text-brand-navy p-1 cursor-pointer">
-            <MoreVertical className="w-4 h-4" />
-          </button>
+          <div className="relative shrink-0">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMenuEventIdx(activeMenuEventIdx === eIdx ? null : eIdx);
+              }}
+              className="text-text-muted hover:text-brand-navy p-1 cursor-pointer"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            {renderActionDropdown(event, eIdx)}
+          </div>
         </div>
       );
     } else {
@@ -220,9 +319,9 @@ export default function ItineraryClient({ itinerary, destination }) {
           <div className="w-24 sm:w-28 h-24 sm:h-28 shrink-0 relative bg-bg-light border-r border-border-gray/30">
             <img src={thumb} alt={title} className="w-full h-full object-cover" />
           </div>
-          <div className="p-3 sm:p-4 flex flex-col justify-between flex-grow text-left">
+          <div className="p-3 sm:p-4 flex flex-col justify-between flex-grow text-left relative">
             <div>
-              <div className="flex justify-between items-start gap-2">
+              <div className="flex justify-between items-start gap-2 pr-6">
                 <h4 className="font-headers text-xs sm:text-sm font-bold text-brand-navy leading-snug line-clamp-2">
                   {title}
                 </h4>
@@ -235,6 +334,20 @@ export default function ItineraryClient({ itinerary, destination }) {
                 {desc || 'Ponto de interesse sugerido por curadores locais.'}
               </p>
             </div>
+            
+            <div className="absolute right-3 top-3">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveMenuEventIdx(activeMenuEventIdx === eIdx ? null : eIdx);
+                }}
+                className="text-text-muted hover:text-brand-navy p-1 cursor-pointer"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+              {renderActionDropdown(event, eIdx)}
+            </div>
+
             <div className="flex justify-between items-center mt-2 border-t border-border-gray/30 pt-2">
               <span className="text-[9px] font-black uppercase tracking-wider text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-md">
                 {price}
@@ -255,128 +368,207 @@ export default function ItineraryClient({ itinerary, destination }) {
   const itinerarySchema = getItinerarySchema(itinerary, destName);
   const faqSchema = destination && destination.faqs ? getFAQSchema(destination.faqs) : null;
 
-  return (
-    <div className="w-full bg-[#F7F8FA] min-h-screen flex flex-col justify-between selection:bg-brand-orange/20 selection:text-brand-navy pb-24">
-      <Header onOpenDownload={() => setIsDownloadOpen(true)} />
+  // Floating map click deep link/modal handler (Fase 5.2)
+  const handleMapClick = () => {
+    if (!isUnlocked) {
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      const appUrl = `twogo://itinerary/${itinerary.slug}`;
+      const start = Date.now();
+      window.location.href = appUrl;
       
-      <JsonLd schema={itinerarySchema} />
-      {faqSchema && <JsonLd schema={faqSchema} />}
+      setTimeout(() => {
+        if (Date.now() - start < 1500) {
+          setIsMapModalOpen(true);
+        }
+      }, 1000);
+    } else {
+      setIsMapModalOpen(true);
+    }
+  };
 
-      <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+  const MapModal = () => {
+    if (!isMapModalOpen) return null;
+
+    const mapSearchQuery = encodeURIComponent(destName + ' turismo');
+    const browserMapUrl = `https://www.google.com/maps/search/?api=1&query=${mapSearchQuery}`;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div className="bg-white border border-border-gray rounded-[28px] max-w-md w-full p-6 text-center shadow-lg relative animate-scale-up">
+          <button
+            onClick={() => setIsMapModalOpen(false)}
+            className="absolute top-4 right-4 text-text-muted hover:text-brand-navy p-1 text-sm font-bold cursor-pointer"
+          >
+            ✕
+          </button>
           
-          <Breadcrumbs items={[
-            { name: 'Roteiros', url: '/roteiros' },
-            { name: itinerary.title, url: `/roteiros/${itinerary.slug}` }
-          ]} />
+          <span className="bg-brand-orange/10 text-brand-orange text-[9px] font-extrabold tracking-widest px-3 py-1 rounded-full uppercase font-headers">
+            📍 MAPA INTERATIVO
+          </span>
+          
+          <h3 className="font-headers text-lg font-bold text-brand-navy mt-4">
+            Mapa de {destName}
+          </h3>
+          <p className="text-xs text-text-muted mt-2 mb-6">
+            Acesse as rotas completas do seu roteiro otimizadas por satélite.
+          </p>
 
-          {/* Cover Header Banner Card (App Mockup Style) */}
-          <div className="relative rounded-[28px] overflow-hidden bg-brand-navy text-white p-6 sm:p-8 my-4 shadow-md min-h-[220px] flex flex-col justify-between">
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-[0.4] pointer-events-none select-none"
-              style={{ backgroundImage: `url(${destination ? destination.image : ''})` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/95 via-brand-navy/40 to-transparent pointer-events-none" />
-
-            {/* Top Bar with back button and options */}
-            <div className="relative z-10 flex justify-between items-center w-full">
-              <Link 
-                href="/roteiros"
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-brand-navy hover:scale-105 transition-all shadow-sm"
-              >
-                <ArrowLeft className="w-4.5 h-4.5" />
-              </Link>
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleCopyLink}
-                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-xs flex items-center justify-center text-white transition-all cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Bottom Details with Title and duration */}
-            <div className="relative z-10 flex justify-between items-end w-full mt-12">
-              <div className="text-left">
-                <span className="bg-brand-orange text-white text-[9px] font-extrabold tracking-widest px-2.5 py-1 rounded-full w-fit">
-                  {destination ? destination.country.toUpperCase() : 'ROTEIRO'}
-                </span>
-                <h1 className="font-headers text-2.5xl sm:text-4xl font-extrabold mt-2 tracking-tight text-white leading-tight">
-                  {destination ? destination.name : itinerary.title}
-                </h1>
-              </div>
-              <span className="bg-black/50 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl">
-                {itinerary.duration} {itinerary.duration === 1 ? 'Dia' : 'Dias'}
-              </span>
+          <div className="w-full h-44 rounded-2xl bg-bg-light border border-border-gray overflow-hidden relative mb-6 shadow-xs">
+            <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-70"></div>
+            <svg className="w-full h-full text-brand-navy" viewBox="0 0 200 100">
+              <path d="M20,80 Q60,20 100,50 T180,30" fill="none" stroke="#F47A20" strokeWidth="3" strokeDasharray="5,5" />
+              <circle cx="20" cy="80" r="6" fill="#081B6B" />
+              <circle cx="100" cy="50" r="6" fill="#081B6B" />
+              <circle cx="180" cy="30" r="6" fill="#081B6B" />
+            </svg>
+            <div className="absolute bottom-2 right-2 bg-brand-navy text-white text-[9px] font-bold px-2 py-0.5 rounded font-headers">
+              Visualização de Rota
             </div>
           </div>
 
-          {/* App Promotional Offer Banner */}
-          {!isUnlocked && (
-            <div 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#121829] text-white rounded-2xl p-4 mb-4 shadow-sm flex items-center justify-between gap-4 cursor-pointer hover:bg-black/90 transition-all border border-white/5"
+          <div className="flex flex-col gap-2.5">
+            <a
+              href={browserMapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary justify-center text-xs py-3 cursor-pointer"
             >
-              <div className="flex items-center gap-3 text-left">
-                <div className="w-9 h-9 rounded-xl bg-[#96AB21] text-brand-navy flex items-center justify-center shrink-0 shadow-md shadow-[#96AB21]/20 animate-pulse">
-                  <Unlock className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-headers text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
-                    <span>Acesso Imediato</span>
-                    <span className="bg-brand-orange text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">OFFER</span>
-                  </h4>
-                  <p className="text-[10px] text-white/70 mt-0.5 leading-normal">
-                    Tenha acesso a todos os dias de roteiro por apenas <strong className="text-[#96AB21]">R$ 18,99</strong>
-                  </p>
-                </div>
+              Ver no Google Maps
+            </a>
+            
+            <div className="border-t border-border-gray/50 my-2 pt-3">
+              <span className="text-[9px] font-extrabold text-brand-navy uppercase tracking-wider block mb-2 font-headers">Sincronizar com celular</span>
+              <div className="p-2 bg-white border border-border-gray rounded-xl w-24 h-24 mx-auto flex items-center justify-center shadow-xs">
+                <QRCodeSVG 
+                  value={typeof window !== 'undefined' ? window.location.href : `https://2go.com.br/roteiros/${itinerary.slug}`} 
+                  size={80}
+                />
               </div>
-              <ChevronRight className="w-4 h-4 text-white/50 shrink-0" />
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-          {/* Countdown timer card */}
-          {!isUnlocked && (
-            <div className="bg-white border border-border-gray p-4 rounded-2xl shadow-xs mb-8 flex flex-row items-center justify-between gap-4 text-left">
-              <span className="text-[10px] font-extrabold text-brand-navy uppercase tracking-wider">
-                Faltam apenas
-              </span>
+  return (
+    <div className="w-full bg-[#F7F8FA] min-h-screen flex flex-col justify-between selection:bg-brand-orange/20 selection:text-brand-navy pb-24">
+      <Header onOpenDownload={() => setIsDownloadOpen(true)} />
+
+      {/* JSON-LD Schemas */}
+      <JsonLd schema={itinerarySchema} />
+      {faqSchema && <JsonLd schema={faqSchema} />}
+
+      {/* Toast popup */}
+      {toastMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-brand-navy text-white text-xs font-bold px-5 py-3 rounded-xl shadow-lg z-50 animate-bounce">
+          {toastMessage}
+        </div>
+      )}
+
+      <main className="flex-grow pt-32">
+        
+        {/* Banner de Oferta Especial */}
+        {!isUnlocked && (
+          <div className="bg-[#FAF9F6] border-b border-border-gray py-4 text-center">
+            <div className="container mx-auto px-6 max-w-5xl flex flex-col sm:flex-row items-center justify-center gap-4 text-left">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-0.5">
-                  {renderDigits(timeLeft.days)}
-                  <span className="text-[8px] font-extrabold text-text-muted uppercase ml-1">dias</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  {renderDigits(timeLeft.hours)}
-                  <span className="text-[8px] font-extrabold text-text-muted uppercase ml-1">horas</span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  {renderDigits(timeLeft.minutes)}
-                  <span className="text-[8px] font-extrabold text-text-muted uppercase ml-1">minutos</span>
+                <span className="text-xl">⚡</span>
+                <div>
+                  <span className="font-headers text-[9px] font-black text-brand-orange uppercase tracking-wider">OFERTA DE LANÇAMENTO</span>
+                  <h4 className="font-headers text-xs font-bold text-brand-navy mt-0.5">
+                    Libere este roteiro completo e ganhe 50% de desconto!
+                  </h4>
                 </div>
               </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-text-muted">Expira em:</span>
+                  {renderDigits(timeLeft.hours)}
+                  <span className="text-[#E13B22] font-black font-mono text-xs">:</span>
+                  {renderDigits(timeLeft.minutes)}
+                  <span className="text-[#E13B22] font-black font-mono text-xs">:</span>
+                  {renderDigits(timeLeft.seconds)}
+                </div>
+                <button
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="bg-brand-orange hover:bg-brand-orange/95 text-white font-extrabold text-[10px] px-3.5 py-1.5 rounded-lg shadow-sm cursor-pointer transition-all uppercase tracking-wider"
+                >
+                  Garantir
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Day selection tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-8 custom-scrollbar-hide -mx-6 px-6">
-            {itinerary.days.map((day, dIdx) => {
-              const isActive = activeDayIndex === dIdx;
-              const isLocked = dIdx > 0 && !isUnlocked;
-              const dayLabel = getDayLabel(dIdx);
+        <div className="container mx-auto px-6 max-w-[1440px] w-full mt-6">
+          <Breadcrumbs />
+
+          {/* Roteiro Hero Section */}
+          <div className="bg-white border border-border-gray rounded-[28px] p-6 sm:p-8 shadow-xs mb-8 mt-4 text-left flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-brand-orange/10 text-brand-orange text-[9px] font-extrabold tracking-widest px-2.5 py-1 rounded-md uppercase font-headers">
+                  ROTEIRO DE VIAGEM
+                </span>
+                <span className="bg-brand-navy/10 text-brand-navy text-[9px] font-extrabold tracking-widest px-2.5 py-1 rounded-md uppercase font-headers">
+                  Curadoria 2GO
+                </span>
+              </div>
+              <h1 className="font-headers text-2.5xl sm:text-3.5xl font-black text-brand-navy mt-3 leading-tight">
+                {itinerary.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-text-muted mt-2 max-w-[620px] leading-relaxed">
+                {itinerary.desc}
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 w-full md:w-auto shrink-0 justify-end">
+              <button 
+                onClick={handleCopyLink}
+                className="btn btn-outline py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer justify-center flex-1 sm:flex-initial"
+              >
+                <Share2 className="w-3.5 h-3.5 text-brand-orange" />
+                <span>{copied ? 'Copiado!' : 'Compartilhar'}</span>
+              </button>
               
+              {isUnlocked ? (
+                <button 
+                  onClick={() => setIsDownloadOpen(true)}
+                  className="btn btn-primary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer justify-center flex-1 sm:flex-initial"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Sincronizar no App</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="btn btn-secondary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer justify-center flex-1 sm:flex-initial"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Desbloquear Roteiro</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Days Tabs selector */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide text-left">
+            {itinerary.days.map((day, idx) => {
+              const isActive = activeDayIndex === idx;
+              const isLocked = idx > 0 && !isUnlocked;
+              const dayLabel = getDayLabel(idx);
+
               return (
                 <button
-                  key={dIdx}
-                  onClick={() => {
-                    if (isLocked) {
-                      setIsModalOpen(true);
-                    } else {
-                      setActiveDayIndex(dIdx);
-                    }
-                  }}
-                  className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer border shrink-0 flex items-center gap-1.5 ${
+                  key={idx}
+                  onClick={() => setActiveDayIndex(idx)}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-full text-xs font-extrabold shrink-0 border transition-all cursor-pointer ${
                     isActive
                       ? 'bg-brand-navy border-brand-navy text-white shadow-sm'
                       : 'bg-white border-border-gray text-text-muted hover:border-brand-navy/30 hover:text-brand-navy'
@@ -401,14 +593,14 @@ export default function ItineraryClient({ itinerary, destination }) {
                 {/* Timeline Header */}
                 <div className="flex justify-between items-center border-b border-border-gray/50 pb-4 mb-6 text-left">
                   <div>
-                    <span className="text-[9px] font-black text-brand-orange uppercase tracking-wider">PROGRAMAÇÃO ATIVA</span>
+                    <span className="text-[9px] font-black text-brand-orange uppercase tracking-wider font-headers">PROGRAMAÇÃO DO DIA</span>
                     <h3 className="font-headers text-base sm:text-lg font-bold text-brand-navy mt-1">
                       {isUnlocked || activeDayIndex === 0 
                         ? itinerary.days[activeDayIndex].title 
                         : 'Programação de Dia Completo Oculta'}
                     </h3>
                   </div>
-                  <span className="text-[10px] font-black text-brand-navy bg-brand-navy/10 px-3 py-1 rounded-full uppercase tracking-wider">
+                  <span className="text-[10px] font-black text-brand-navy bg-brand-navy/10 px-3 py-1 rounded-full uppercase tracking-wider font-headers">
                     {itinerary.days[activeDayIndex].day}
                   </span>
                 </div>
@@ -440,7 +632,7 @@ export default function ItineraryClient({ itinerary, destination }) {
                         Revele as atrações detalhadas, cafés sugeridos e rotas completas dos dias restantes gratuitamente.
                       </p>
                       <button 
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => setIsCheckoutOpen(true)}
                         className="bg-[#96AB21] hover:bg-[#85981D] text-brand-navy font-extrabold py-2.5 px-6 text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#96AB21]/20 hover:scale-[1.01] active:scale-95 transition-all rounded-xl"
                       >
                         <span>Liberar Roteiro Completo</span>
@@ -466,7 +658,7 @@ export default function ItineraryClient({ itinerary, destination }) {
                           <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-navy bg-white mt-3 shrink-0 shadow-sm animate-fade-in"></div>
                           
                           {/* Render Rich Event Card */}
-                          {renderEventCard(event)}
+                          {renderEventCard(event, eIdx)}
                         </div>
                         
                         {/* Render Transit Info between events */}
@@ -486,8 +678,8 @@ export default function ItineraryClient({ itinerary, destination }) {
                   Nosso assistente inteligente pode estruturar uma programação única baseada no seu orçamento exato, dias livres e estilo de viagem.
                 </p>
                 <Link 
-                  href={`/planejamento/${itinerary.destinationSlug}`}
-                  className="bg-[#96AB21] hover:bg-[#85981D] text-[#081B6B] font-extrabold py-3 px-6 rounded-xl transition-all shadow-md shadow-[#96AB21]/10 hover:scale-[1.01] active:scale-95 text-xs flex items-center gap-1.5 cursor-pointer border border-[#96AB21]/10"
+                  href={`/planejamento?destino=${itinerary.destinationSlug}`}
+                  className="bg-[#96AB21] hover:bg-[#85981D] text-[#081B6B] font-extrabold py-3 px-6 rounded-xl transition-all shadow-md shadow-[#96AB21]/10 hover:scale-[1.01] active:scale-95 text-xs flex items-center gap-1.5 cursor-pointer border border-[#96AB21]/10 font-headers"
                 >
                   <span>Gerar meu roteiro</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -503,7 +695,7 @@ export default function ItineraryClient({ itinerary, destination }) {
               <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-4 text-left">
                 {isUnlocked ? (
                   <>
-                    <span className="text-[9px] font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1">
+                    <span className="text-[9px] font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1 font-headers">
                       <Smartphone className="w-3.5 h-3.5" /> LEVAR NA VIAGEM
                     </span>
                     <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">
@@ -518,94 +710,74 @@ export default function ItineraryClient({ itinerary, destination }) {
                       <QRCodeSVG 
                         value={typeof window !== 'undefined' ? window.location.href : `https://2go.com.br/roteiros/${itinerary.slug}`} 
                         size={120}
-                        bgColor="#ffffff"
-                        fgColor="#081B6B"
-                        level="H"
                       />
                     </div>
-
-                    <button
-                      onClick={handleCopyLink}
-                      className="btn btn-outline py-2.5 text-xs font-bold w-full justify-center flex items-center gap-1.5 cursor-pointer mt-1"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>{copied ? 'Copiado!' : 'Copiar Link do Roteiro'}</span>
-                    </button>
                   </>
                 ) : (
                   <>
-                    <span className="text-[9px] font-extrabold text-text-muted uppercase tracking-wider flex items-center gap-1">
-                      <Lock className="w-3.5 h-3.5" /> LEVAR NA VIAGEM
+                    <span className="text-[9px] font-extrabold text-brand-orange uppercase tracking-wider flex items-center gap-1 font-headers">
+                      <Lock className="w-3.5 h-3.5" /> ROTEIRO BLOQUEADO
                     </span>
-                    <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight opacity-75">
-                      Exportação Bloqueada
+                    <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">
+                      Desbloqueie para levar no celular
                     </h4>
                     <p className="text-[11px] text-text-muted leading-relaxed">
-                      Desbloqueie o roteiro completo para gerar o QR Code de sincronização offline no seu celular.
+                      Desbloqueie os dias restantes e a integração offline para sincronizar no seu app e usar na sua viagem.
                     </p>
-                    <button 
-                      onClick={() => setIsModalOpen(true)}
-                      className="bg-[#96AB21] hover:bg-[#85981D] text-brand-navy font-extrabold py-2.5 px-6 rounded-xl transition-all shadow-md shadow-[#96AB21]/20 hover:scale-[1.01] active:scale-95 text-xs flex items-center gap-1.5 cursor-pointer border border-[#96AB21]/10 w-full justify-center"
+                    <button
+                      onClick={() => setIsCheckoutOpen(true)}
+                      className="btn btn-secondary py-3 justify-center text-xs font-bold text-center w-full"
                     >
-                      <Unlock className="w-3.5 h-3.5" />
-                      <span>Liberar Acesso Offline</span>
+                      Desbloquear Roteiro
                     </button>
                   </>
                 )}
               </div>
 
-              {/* Consulting Promo card */}
-              <div className="bg-brand-navy text-white p-6 rounded-[24px] shadow-sm flex flex-col gap-3">
-                <span className="text-[8.5px] font-extrabold text-brand-orange uppercase tracking-wider">SUPORTE EXCLUSIVO</span>
-                <h4 className="font-headers font-bold text-white text-sm leading-tight">Deseja curadoria personalizada?</h4>
-                <p className="text-[11px] text-white/70 leading-relaxed">Deixe que um consultor local da 2GO estruture e agende todas as suas atrações, hotéis e transportes sob medida.</p>
-                <Link 
-                  href="/premium"
-                  className="bg-[#96AB21] hover:bg-[#85981D] text-brand-navy font-extrabold py-3 text-xs justify-center flex items-center gap-1.5 transition-all mt-2 rounded-xl"
-                >
-                  Falar com Especialista
-                </Link>
+              {/* Affiliate Deals */}
+              <AffiliateDeals destinationName={destName} />
+
+              {/* Dicas locais */}
+              <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-3">
+                <span className="text-[9px] font-extrabold text-brand-orange uppercase tracking-wider block font-headers">💡 DICAS DO CURADOR</span>
+                <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight">Como aproveitar {destName || 'seu destino'}</h4>
+                <ul className="text-[11px] text-text-muted flex flex-col gap-2.5 list-none p-0 m-0 text-left">
+                  <li className="flex gap-2 items-start">
+                    <span className="text-brand-orange font-bold shrink-0">•</span>
+                    <span>Evite horários de pico nas atrações mais famosas visitando-as no início da manhã ou fim de tarde.</span>
+                  </li>
+                  <li className="flex gap-2 items-start">
+                    <span className="text-brand-orange font-bold shrink-0">•</span>
+                    <span>Reserve restaurantes gourmet com pelo menos 2 a 3 dias de antecedência para garantir mesa.</span>
+                  </li>
+                  <li className="flex gap-2 items-start">
+                    <span className="text-brand-orange font-bold shrink-0">•</span>
+                    <span>Use calçados confortáveis; a curadoria foi pensada para otimizar caminhadas cênicas.</span>
+                  </li>
+                </ul>
               </div>
 
-              {/* Local FAQs list in sidebar */}
-              {destination && destination.faqs && destination.faqs.length > 0 && (
-                <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-4">
-                  <h4 className="font-headers font-bold text-brand-navy text-sm">
-                    Dúvidas sobre {destination.name}
-                  </h4>
-                  <div className="flex flex-col gap-2">
-                    {destination.faqs.slice(0, 3).map((faq, i) => (
-                      <div 
-                        key={i}
-                        className="border border-border-gray rounded-lg overflow-hidden"
-                      >
-                        <button
-                          onClick={() => toggleFaq(i)}
-                          className="w-full p-3 font-headers text-[11px] font-bold text-brand-navy text-left flex justify-between items-center bg-bg-light/20 hover:bg-bg-light transition-colors"
-                        >
-                          <span className="line-clamp-2">{faq.q}</span>
-                          <ChevronRight className={`w-3.5 h-3.5 text-brand-orange shrink-0 transform transition-transform ${
-                            openFaqIndex === i ? 'rotate-90' : ''
-                          }`} />
-                        </button>
-                        {openFaqIndex === i && (
-                          <div className="p-3 text-[11px] text-text-muted leading-relaxed border-t border-border-gray bg-white">
-                            {faq.a}
-                          </div>
-                        )}
+              {/* Roteiros Relacionados */}
+              <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm flex flex-col gap-3">
+                <span className="text-[9px] font-extrabold text-brand-navy uppercase tracking-wider block font-headers">✨ ROTEIROS RECOMENDADOS</span>
+                <h4 className="font-headers font-bold text-brand-navy text-sm leading-tight font-bold">Também em {destName || 'regiões próximas'}</h4>
+                <div className="flex flex-col gap-3 mt-1 text-left">
+                  {[
+                    { title: `Fim de Semana Romântico em ${destName || 'Destino'}`, duration: '3 Dias' },
+                    { title: `Guia Gastronômico Completo em ${destName || 'Destino'}`, duration: '5 Dias' }
+                  ].map((related, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl border border-border-gray/70 hover:border-brand-orange/30 transition-all text-xs">
+                      <div>
+                        <span className="font-bold text-brand-navy block leading-tight">{related.title}</span>
+                        <span className="text-[10px] text-text-muted mt-1 block">Duração: {related.duration}</span>
                       </div>
-                    ))}
-                  </div>
+                      <ChevronRight className="w-4 h-4 text-brand-orange shrink-0" />
+                    </div>
+                  ))}
                 </div>
-              )}
-
+              </div>
             </div>
 
-          </div>
-
-          {/* Affiliate Deals Section */}
-          <div className="mt-12 w-full">
-            <AffiliateDeals destination={destination} />
           </div>
 
           {/* Newsletter Box at the base of the page */}
@@ -619,8 +791,8 @@ export default function ItineraryClient({ itinerary, destination }) {
       {/* Floating Mapa Button */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
         <button 
-          onClick={() => setIsDownloadOpen(true)}
-          className="bg-brand-navy hover:bg-brand-navy/95 text-white font-bold px-6 py-3 rounded-full flex items-center gap-1.5 shadow-lg shadow-brand-navy/20 cursor-pointer transition-all hover:scale-105 active:scale-95 text-xs uppercase tracking-wider"
+          onClick={handleMapClick}
+          className="bg-brand-navy hover:bg-brand-navy/95 text-white font-bold px-6 py-3 rounded-full flex items-center gap-1.5 shadow-lg shadow-brand-navy/20 cursor-pointer transition-all hover:scale-105 active:scale-95 text-xs uppercase tracking-wider font-headers"
         >
           <Map className="w-4 h-4 text-brand-orange shrink-0" />
           <span>Mapa</span>
@@ -634,12 +806,15 @@ export default function ItineraryClient({ itinerary, destination }) {
         onClose={() => setIsDownloadOpen(false)} 
       />
 
-      <LeadWallModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onUnlock={handleUnlock}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
         destinationName={destName}
+        itinerarySlug={itinerary.slug}
+        onSuccess={handleUnlock}
       />
+
+      <MapModal />
     </div>
   );
 }

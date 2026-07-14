@@ -42,7 +42,7 @@ export default function DestinationClient({ destination, itineraries }) {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[
             { name: 'Destinos', url: '/destinos' },
@@ -291,7 +291,7 @@ export default function DestinationClient({ destination, itineraries }) {
               {/* Suggested itineraries */}
               <div className="bg-white border border-border-gray p-6 rounded-[24px] shadow-sm text-left">
                 <h4 className="font-headers font-bold text-brand-navy text-sm border-b border-border-gray pb-3 mb-4">
-                  Roteiros Prontos Curados
+                  Exemplos de Roteiros
                 </h4>
                 
                 {itineraries.length > 0 ? (

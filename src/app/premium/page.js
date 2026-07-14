@@ -29,10 +29,10 @@ const plans = [
     name: 'Premium',
     price: 'R$ 297',
     period: 'por roteiro',
-    desc: 'Curadoria autoral completa de um especialista local no seu destino.',
+    desc: 'Consultoria Premium autoral completa de um especialista local no seu destino.',
     features: [
       'Tudo do plano Essencial',
-      'Curadoria 100% autoral e sob medida',
+      'Consultoria 100% autoral e sob medida',
       'Reservas de hotéis, voos e transfers integrados',
       'Roteiro detalhado dia a dia no app',
       'Indicação de restaurantes secretos'
@@ -175,13 +175,13 @@ export default function Premium() {
           <div className="absolute bottom-10 right-10 w-44 h-44 bg-brand-green/5 rounded-full blur-[60px] pointer-events-none select-none"></div>
 
           <span className="bg-brand-orange text-white text-[9px] font-extrabold tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto uppercase">
-            Consultoria e Roteiros Premium
+            Consultoria Premium
           </span>
           <h1 className="font-headers text-3.5xl sm:text-5xl md:text-6xl font-extrabold text-brand-navy mt-6 mb-6 leading-tight tracking-tight">
             Viaje sem estresse. Planejado por especialistas locais.
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-text-muted max-w-[720px] mx-auto leading-relaxed">
-            Escolha o nível de curadoria ideal para a sua jornada. Unimos inteligência em rotas com o olhar sensível de curadores reais para que você aproveite o melhor de cada destino.
+            Escolha o plano de consultoria ideal para a sua jornada. Unimos inteligência em rotas com o olhar sensível de especialistas reais para que você aproveite o melhor de cada destino.
           </p>
         </section>
 
@@ -330,7 +330,7 @@ export default function Premium() {
                   <div className="w-16 h-16 bg-brand-green text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md shadow-brand-green/20">✓</div>
                   <h3 className="font-headers text-2.5xl font-black text-brand-navy">Pagamento Confirmado!</h3>
                   <p className="text-xs text-text-muted max-w-[340px] leading-relaxed">
-                    Parabéns! Sua curadoria exclusiva para o plano <strong>{selectedPlan?.name}</strong> foi ativada. Um especialista local entrará em contato via WhatsApp no número informado nas próximas 2 horas. ✈️
+                    Parabéns! Sua Consultoria Premium exclusiva para o plano <strong>{selectedPlan?.name}</strong> foi ativada. Um especialista local entrará em contato via WhatsApp no número informado nas próximas 2 horas. ✈️
                   </p>
                   
                   <div className="bg-bg-light border border-border-gray p-4 rounded-xl flex items-center gap-3 max-w-sm mt-4">
@@ -545,7 +545,7 @@ export default function Premium() {
                   </button>
 
                   <p className="text-[9px] text-text-muted leading-relaxed text-center px-4">
-                    Ao confirmar o pagamento, você concorda com nossos termos de cancelamento e curadoria de serviços. Seus dados estão criptografados e protegidos por conexões seguras SSL.
+                    Ao confirmar o pagamento, você concorda com nossos termos de cancelamento e consultoria de serviços. Seus dados estão criptografados e protegidos por conexões seguras SSL.
                   </p>
                 </form>
               )}

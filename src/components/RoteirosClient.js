@@ -7,10 +7,11 @@ import Header from './Header';
 import Footer from './Footer';
 import Breadcrumbs from './Breadcrumbs';
 import AppDownloadModal from './AppDownloadModal';
+import { matchesSearch } from '@/lib/searchHelper';
 
 export default function RoteirosClient({ itineraries = [] }) {
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
-  const [selectedDest, setSelectedDest] = useState('todos');
+  const [selectedDest, setSelectedDest] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Read URL search parameter on client mount
@@ -24,24 +25,31 @@ export default function RoteirosClient({ itineraries = [] }) {
     }
   }, []);
 
-  // Extract unique destinations that have itineraries
-  const destFilters = ['todos', ...new Set(itineraries.map(it => it.destinationName).filter(Boolean))];
+  // Filter chips
+  const destFilters = ['Todos', 'Paris', 'Roma', 'Lisboa', 'Londres', 'Japão', 'Itália', 'Praia', 'Romance', 'Família', 'Aventura'];
 
   const filteredItineraries = itineraries.filter(it => {
-    // 1. Filter by tab destination
-    if (selectedDest !== 'todos' && it.destinationName !== selectedDest) {
-      return false;
+    // 1. Filter by chip
+    if (selectedDest !== 'Todos') {
+      const filterLower = selectedDest.toLowerCase();
+      // If it's a destination filter:
+      const matchDest = 
+        (it.destinationName && it.destinationName.toLowerCase() === filterLower) || 
+        (it.destinationCountry && it.destinationCountry.toLowerCase() === filterLower);
+      
+      // If it's a style filter:
+      const matchStyle = 
+        (it.style && it.style.toLowerCase().includes(filterLower)) ||
+        (it.title && it.title.toLowerCase().includes(filterLower)) ||
+        (it.desc && it.desc.toLowerCase().includes(filterLower));
+        
+      if (!matchDest && !matchStyle) {
+        return false;
+      }
     }
     // 2. Filter by search query
     if (searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase().trim();
-      return (
-        it.title.toLowerCase().includes(query) ||
-        it.desc.toLowerCase().includes(query) ||
-        it.destinationName.toLowerCase().includes(query) ||
-        it.destinationCountry.toLowerCase().includes(query) ||
-        (it.style && it.style.toLowerCase().includes(query))
-      );
+      return matchesSearch(searchQuery, it);
     }
     return true;
   });
@@ -49,14 +57,15 @@ export default function RoteirosClient({ itineraries = [] }) {
   // Extract matching destinations for direct Planning CTA
   const matchingDests = [];
   if (searchQuery.trim() !== '') {
-    const query = searchQuery.toLowerCase().trim();
     const seen = new Set();
     itineraries.forEach(it => {
-      if (
-        it.destinationName && 
-        (it.destinationName.toLowerCase().includes(query) || 
-         it.destinationCountry.toLowerCase().includes(query))
-      ) {
+      if (matchesSearch(searchQuery, {
+        destinationName: it.destinationName,
+        destinationCountry: it.destinationCountry,
+        destinationSlug: it.destinationSlug,
+        slug: it.destinationSlug,
+        tags: it.tags || []
+      })) {
         if (!seen.has(it.destinationSlug)) {
           seen.add(it.destinationSlug);
           matchingDests.push({
@@ -79,20 +88,20 @@ export default function RoteirosClient({ itineraries = [] }) {
       <Header onOpenDownload={() => setIsDownloadOpen(true)} />
 
       <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl text-left">
+        <div className="container mx-auto px-6 max-w-[1440px] w-full text-left">
           
           <Breadcrumbs items={[{ name: 'Roteiros', url: '/roteiros' }]} />
 
           {/* Header */}
           <header className="my-8">
             <span className="bg-brand-orange/10 text-brand-orange text-[10px] font-extrabold tracking-widest px-3 py-1.5 rounded-full w-fit">
-              ROTEIROS DE CURADORIA
+              EXEMPLOS DE ROTEIROS
             </span>
             <h1 className="font-headers text-3.5xl sm:text-5xl font-extrabold text-brand-navy mt-4 mb-4 tracking-tight">
-              Planejamentos Completos de Viagem
+              Roteiros Completos para se Inspirar
             </h1>
             <p className="text-sm sm:text-base text-text-muted max-w-2xl leading-relaxed">
-              Explore roteiros dia a dia otimizados por nossos especialistas. Roteiros estruturados com as melhores rotas, passeios clássicos and locais secretos para otimizar o seu tempo.
+              Explore roteiros dia a dia reais e otimizados. Use como inspiração para planejar a sua própria rota na 2GO.
             </p>
           </header>
 
@@ -148,7 +157,7 @@ export default function RoteirosClient({ itineraries = [] }) {
                       : 'bg-white border-border-gray text-text-muted hover:border-brand-navy/30 hover:text-brand-navy'
                   }`}
                 >
-                  {dest === 'todos' ? 'Todos os Destinos' : dest}
+                  {dest === 'Todos' ? 'Todos os Destinos' : dest}
                 </button>
               ))}
             </div>
