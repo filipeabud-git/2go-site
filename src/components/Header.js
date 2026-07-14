@@ -35,7 +35,7 @@ export default function Header({ onOpenDownload }) {
   const menuItems = [
     { label: 'Roteiros', href: '/roteiros' },
     { label: 'Custos', href: '/quanto-custa' },
-    { label: 'Planejamento', href: '/planejamento' },
+    { label: 'Criar roteiro', href: '/planejamento' },
     { label: 'Blog', href: '/blog' }
   ];
 
@@ -93,7 +93,7 @@ export default function Header({ onOpenDownload }) {
                   href="/planejamento"
                   className="hidden lg:inline-flex btn btn-primary btn-sm cursor-pointer"
                 >
-                  Gerar Roteiro
+                  Criar roteiro
                 </Link>
                 <button 
                   onClick={onOpenDownload}
@@ -130,15 +130,6 @@ export default function Header({ onOpenDownload }) {
           onClick={(e) => e.stopPropagation()}
         >
           <ul className="list-none flex flex-col gap-4 m-0 p-0 text-left">
-            <li className="w-full">
-              <Link
-                href="/roteiros"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="font-headers text-2.5xl font-black text-brand-navy hover:text-brand-orange hover:translate-x-1.5 transition-all duration-300 w-full block text-left py-2 border-b border-border-gray/30"
-              >
-                Destinos
-              </Link>
-            </li>
             {menuItems.map((item, idx) => (
               <li key={idx} className="w-full">
                 <Link
@@ -158,16 +149,16 @@ export default function Header({ onOpenDownload }) {
                 setIsMobileMenuOpen(false);
                 onOpenDownload();
               }}
-              className="w-full bg-[#081B6B] hover:bg-[#06144f] text-white py-3.5 flex items-center justify-center cursor-pointer font-bold rounded-xl shadow-md shadow-brand-navy/10 text-sm"
+              className="w-full bg-[#081B6B] hover:bg-[#06144f] text-white py-3.5 flex items-center justify-center cursor-pointer font-bold rounded-xl shadow-md shadow-brand-navy/10 text-sm border-none"
             >
               Baixar App
             </button>
             <Link 
-              href="/planejamento"
+              href="/premium"
               onClick={() => setIsMobileMenuOpen(false)}
               className="w-full border border-brand-navy text-brand-navy hover:bg-brand-navy/5 py-3.5 flex items-center justify-center gap-2 cursor-pointer font-bold rounded-xl text-sm"
             >
-              <Map className="w-4.5 h-4.5" /> Gerar Roteiro
+              Consultoria Premium
             </Link>
           </div>
         </div>

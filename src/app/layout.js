@@ -17,8 +17,12 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "2GO Roteiros | Planejamento de Viagem Personalizado",
-  description: "Crie roteiros sob medida organizados automaticamente. Tecnologia e curadoria para sua próxima viagem.",
+  title: "2GO Travel | Planejamento de Viagem Personalizado",
+  description: "Crie roteiros sob medida organizados automaticamente. Tecnologia e consultoria para sua próxima viagem.",
+  metadataBase: new URL("https://2go-travel-web-app.vercel.app"),
+  alternates: {
+    canonical: "/"
+  }
 };
 
 export default function RootLayout({ children }) {
@@ -58,6 +62,7 @@ export default function RootLayout({ children }) {
           `}
         </Script>
         <link rel="icon" href="/images/Logo2GO.png" type="image/png" />
+        <link rel="preload" href="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80" as="image" />
       </head>
       
       <body className="min-h-full flex flex-col bg-[#F7F8FA] text-[#1E293B] relative">
